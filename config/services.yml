@@ -1,0 +1,147 @@
+imports:
+    - { resource: tables.yml }
+
+services:
+    # ---------------------------------------------------------------- core
+    salvocortesiano.timezoneclock.zones:
+        class: salvocortesiano\timezoneclock\core\zones
+        arguments:
+            - '@dbal.conn'
+            - '%salvocortesiano.timezoneclock.table.zones%'
+
+    salvocortesiano.timezoneclock.prefs:
+        class: salvocortesiano\timezoneclock\core\prefs
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '%salvocortesiano.timezoneclock.table.users%'
+
+    salvocortesiano.timezoneclock.bar_builder:
+        class: salvocortesiano\timezoneclock\core\bar_builder
+        arguments:
+            - '@config'
+            - '@cache.driver'
+            - '@dbal.conn'
+            - '@salvocortesiano.timezoneclock.zones'
+            - '@salvocortesiano.timezoneclock.prefs'
+            - '@language'
+            - '%salvocortesiano.timezoneclock.table.cities%'
+
+    salvocortesiano.timezoneclock.catalog:
+        class: salvocortesiano\timezoneclock\core\catalog
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@salvocortesiano.timezoneclock.zones'
+            - '@language'
+            - '%salvocortesiano.timezoneclock.table.geo%'
+
+    salvocortesiano.timezoneclock.downloader:
+        class: salvocortesiano\timezoneclock\core\downloader
+        arguments:
+            - '%core.root_path%'
+
+    salvocortesiano.timezoneclock.updater:
+        class: salvocortesiano\timezoneclock\core\updater
+        arguments:
+            - '@config'
+            - '@config_text'
+            - '@dbal.conn'
+            - '@cache.driver'
+            - '@log'
+            - '@salvocortesiano.timezoneclock.downloader'
+            - '%core.root_path%'
+            - '%salvocortesiano.timezoneclock.table.zones%'
+            - '%salvocortesiano.timezoneclock.table.geo%'
+
+    salvocortesiano.timezoneclock.checkup:
+        class: salvocortesiano\timezoneclock\core\checkup
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@dbal.tools'
+            - '@salvocortesiano.timezoneclock.zones'
+            - '@salvocortesiano.timezoneclock.bar_builder'
+            - '@salvocortesiano.timezoneclock.updater'
+            - '@salvocortesiano.timezoneclock.downloader'
+            - '%core.root_path%'
+            - '%salvocortesiano.timezoneclock.table.cities%'
+            - '%salvocortesiano.timezoneclock.table.zones%'
+            - '%salvocortesiano.timezoneclock.table.geo%'
+            - '%salvocortesiano.timezoneclock.table.users%'
+
+    salvocortesiano.timezoneclock.form:
+        class: salvocortesiano\timezoneclock\core\form
+        arguments:
+            - '@config'
+            - '@language'
+            - '@template'
+
+    # ---------------------------------------------------------------- controllers
+    salvocortesiano.timezoneclock.controller.acp:
+        class: salvocortesiano\timezoneclock\controller\acp_controller
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@cache.driver'
+            - '@language'
+            - '@log'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@ext.manager'
+            - '@salvocortesiano.timezoneclock.bar_builder'
+            - '@salvocortesiano.timezoneclock.catalog'
+            - '@salvocortesiano.timezoneclock.zones'
+            - '@salvocortesiano.timezoneclock.updater'
+            - '@salvocortesiano.timezoneclock.checkup'
+            - '@salvocortesiano.timezoneclock.form'
+            - '%salvocortesiano.timezoneclock.table.cities%'
+
+    salvocortesiano.timezoneclock.controller.ucp:
+        class: salvocortesiano\timezoneclock\controller\ucp_controller
+        arguments:
+            - '@config'
+            - '@language'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@salvocortesiano.timezoneclock.prefs'
+            - '@salvocortesiano.timezoneclock.bar_builder'
+            - '@salvocortesiano.timezoneclock.catalog'
+            - '@salvocortesiano.timezoneclock.zones'
+            - '@salvocortesiano.timezoneclock.form'
+
+    # ---------------------------------------------------------------- events, cron, cli
+    salvocortesiano.timezoneclock.listener:
+        class: salvocortesiano\timezoneclock\event\listener
+        arguments:
+            - '@config'
+            - '@template'
+            - '@user'
+            - '@salvocortesiano.timezoneclock.bar_builder'
+            - '@salvocortesiano.timezoneclock.prefs'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: event.listener }
+
+    salvocortesiano.timezoneclock.cron.task.update:
+        class: salvocortesiano\timezoneclock\cron\task\update
+        arguments:
+            - '@config'
+            - '@salvocortesiano.timezoneclock.updater'
+            - '@language'
+        calls:
+            - [set_name, [cron.task.salvocortesiano.timezoneclock.update]]
+        tags:
+            - { name: cron.task }
+
+    salvocortesiano.timezoneclock.console.update:
+        class: salvocortesiano\timezoneclock\console\command\update
+        arguments:
+            - '@user'
+            - '@language'
+            - '@salvocortesiano.timezoneclock.updater'
+        tags:
+            - { name: console.command }

@@ -1,0 +1,5 @@
+parameters:
+    salvocortesiano.timezoneclock.table.cities: '%core.table_prefix%tzc_cities'
+    salvocortesiano.timezoneclock.table.zones: '%core.table_prefix%tzc_zones'
+    salvocortesiano.timezoneclock.table.geo: '%core.table_prefix%tzc_geo'
+    salvocortesiano.timezoneclock.table.users: '%core.table_prefix%tzc_users'

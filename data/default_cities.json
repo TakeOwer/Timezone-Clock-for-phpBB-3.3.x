@@ -1,0 +1,13 @@
+[
+	{"z": "Europe/Rome", "cc": "IT", "it": "Roma", "en": "Rome"},
+	{"z": "Europe/London", "cc": "GB", "it": "Londra", "en": "London"},
+	{"z": "America/New_York", "cc": "US", "it": "New York", "en": "New York"},
+	{"z": "America/Los_Angeles", "cc": "US", "it": "Los Angeles", "en": "Los Angeles"},
+	{"z": "America/Sao_Paulo", "cc": "BR", "it": "San Paolo", "en": "São Paulo"},
+	{"z": "Europe/Moscow", "cc": "RU", "it": "Mosca", "en": "Moscow"},
+	{"z": "Asia/Dubai", "cc": "AE", "it": "Dubai", "en": "Dubai"},
+	{"z": "Asia/Kolkata", "cc": "IN", "it": "Nuova Delhi", "en": "New Delhi"},
+	{"z": "Asia/Shanghai", "cc": "CN", "it": "Pechino", "en": "Beijing"},
+	{"z": "Asia/Tokyo", "cc": "JP", "it": "Tokyo", "en": "Tokyo"},
+	{"z": "Australia/Sydney", "cc": "AU", "it": "Sydney", "en": "Sydney"}
+]

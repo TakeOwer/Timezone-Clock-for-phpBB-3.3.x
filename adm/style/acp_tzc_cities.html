@@ -1,0 +1,50 @@
+{% include '@salvocortesiano_timezoneclock/acp_tzc_header.html' %}
+
+<p class="tzc-intro">{{ lang('TZC_CITIES_INTRO') }}</p>
+
+<div class="tzc-ed-preview tzc-preview-box" data-payload="{{ TZC_PREVIEW }}" data-mode="admin-editor" data-picker="#tzc-picker">
+	<div class="tzc-preview-head"><i class="icon fa-eye fa-fw" aria-hidden="true"></i> {{ lang('TZC_PREVIEW') }} <span>{{ lang('TZC_PREVIEW_LIVE') }}</span></div>
+	<div class="tzc-root"></div>
+	<p class="tzc-ed-preview-empty">{{ lang('TZC_PREVIEW_NOCITIES') }}</p>
+</div>
+
+<form id="tzc-cities-form" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+		<legend>{{ lang('TZC_CITIES_LIST') }}</legend>
+
+		{% if not S_TZC_GEO %}
+		<div class="tzc-note"><i class="icon fa-info-circle fa-fw" aria-hidden="true"></i> {{ lang('TZC_GEO_HINT', U_TZC_DATABASE) }}</div>
+		{% endif %}
+
+		<div class="tzc-ed-picker" id="tzc-picker"
+			data-search-url="{{ U_TZC_SEARCH }}"
+			data-max="200"
+			data-flags="{{ TZC_EXT_URL }}styles/all/theme/flags/"
+			data-locale="{{ lang('TZC_LOCALE') }}"
+			data-mobile-toggle="1"
+			data-i18n="{{ TZC_PICKER_I18N }}"
+			data-initial="{{ TZC_INITIAL }}">
+			<div class="tzc-ed-search">
+				<i class="icon fa-search fa-fw" aria-hidden="true"></i>
+				<input type="search" class="inputbox tzc-ed-input" placeholder="{{ lang('TZC_PICKER_PLACEHOLDER')|e('html_attr') }}" autocomplete="off" aria-label="{{ lang('TZC_PICKER_PLACEHOLDER')|e('html_attr') }}">
+				<button type="button" class="button1 tzc-ed-addbtn"><i class="icon fa-plus fa-fw" aria-hidden="true"></i> {{ lang('TZC_PICKER_ADD') }}</button>
+				<ul class="tzc-ed-results" role="listbox" hidden></ul>
+			</div>
+			<p class="tzc-ed-steps">{{ lang('TZC_PICKER_STEPS') }}</p>
+			<div class="tzc-ed-head">
+				<span>{{ lang('TZC_PICKER_HELP') }}</span>
+				<span class="tzc-ed-count"></span>
+			</div>
+			<ol class="tzc-ed-list"></ol>
+			<p class="tzc-ed-emptymsg">{{ lang('TZC_CITIES_EMPTY') }}</p>
+			<input type="hidden" name="tzc_cities_json" class="tzc-ed-field" value="">
+		</div>
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}">
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+{% include '@salvocortesiano_timezoneclock/acp_tzc_footer.html' %}

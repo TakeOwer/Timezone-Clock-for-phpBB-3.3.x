@@ -1,0 +1,67 @@
+{% include '@salvocortesiano_timezoneclock/acp_tzc_header.html' %}
+
+<div class="tzc-checkup" id="tzc-checkup"
+	data-url="{{ U_ACTION }}"
+	data-hash="{{ TZC_CHK_HASH }}"
+	data-steps="{{ TZC_CHK_STEPS }}"
+	data-start="{% if S_TZC_CHK_QUICK %}quick{% else %}full{% endif %}"
+	data-l-running="{{ lang('TZC_CHK_RUNNING')|e('html_attr') }}"
+	data-l-done="{{ lang('TZC_CHK_DONE')|e('html_attr') }}"
+	data-l-failed="{{ lang('TZC_CHK_FAILED')|e('html_attr') }}"
+	data-l-network="{{ lang('TZC_JOB_NETWORK')|e('html_attr') }}"
+	data-l-sum-ok="{{ lang('TZC_CHK_SUMMARY_OK')|e('html_attr') }}"
+	data-l-sum-warn="{{ lang('TZC_CHK_SUMMARY_WARN')|e('html_attr') }}"
+	data-l-sum-error="{{ lang('TZC_CHK_SUMMARY_ERROR')|e('html_attr') }}">
+
+	<div class="tzc-summary tzc-summary-running">
+		<div class="tzc-summary-icon"><i class="icon fa-stethoscope" aria-hidden="true"></i></div>
+		<div class="tzc-summary-body">
+			<strong class="tzc-sum-text">{{ lang('TZC_CHK_STARTING') }}</strong>
+			<div class="tzc-summary-counts">
+				<span class="tzc-count tzc-count-ok">{{ lang('TZC_CHK_OK') }}{{ lang('COLON') }} <span class="tzc-n-ok">0</span></span>
+				<span class="tzc-count tzc-count-warn">{{ lang('TZC_CHK_WARN') }}{{ lang('COLON') }} <span class="tzc-n-warn">0</span></span>
+				<span class="tzc-count tzc-count-error">{{ lang('TZC_CHK_ERROR') }}{{ lang('COLON') }} <span class="tzc-n-error">0</span></span>
+				<span class="tzc-count tzc-count-info">{{ lang('TZC_CHK_INFO') }}{{ lang('COLON') }} <span class="tzc-n-info">0</span></span>
+			</div>
+			<div class="tzc-muted tzc-sum-time"></div>
+		</div>
+		<div class="tzc-summary-actions">
+			<button type="button" class="button2 tzc-chk-run" data-mode="full"><i class="icon fa-repeat fa-fw" aria-hidden="true"></i> {{ lang('TZC_CHK_RERUN') }}</button>
+			<button type="button" class="button2 tzc-chk-run" data-mode="quick"><i class="icon fa-bolt fa-fw" aria-hidden="true"></i> {{ lang('TZC_CHK_QUICK') }}</button>
+		</div>
+	</div>
+
+	<div class="tzc-progress tzc-chk-progress" hidden>
+		<div class="tzc-progress-top">
+			<span class="tzc-progress-text"></span>
+			<span class="tzc-progress-pct">0%</span>
+		</div>
+		<div class="tzc-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="tzc-progress-fill"></div></div>
+	</div>
+
+	<div class="tzc-chk-results"></div>
+</div>
+
+<fieldset class="tzc-chk-group">
+	<legend>{{ lang('TZC_CHK_GROUP_BROWSER') }}</legend>
+	<p class="tzc-muted">{{ lang('TZC_CHK_BROWSER_EXPLAIN') }}</p>
+	<ul class="tzc-chk-list" id="tzc-browser-test" data-cities="{{ TZC_BROWSER }}"
+		data-l-ok="{{ lang('TZC_CHK_BROWSER_OK')|e('html_attr') }}"
+		data-l-ko="{{ lang('TZC_CHK_BROWSER_KO')|e('html_attr') }}"
+		data-l-na="{{ lang('TZC_CHK_BROWSER_NA')|e('html_attr') }}"
+		data-l-clock-title="{{ lang('TZC_CHK_BROWSER_CLOCK_TITLE')|e('html_attr') }}"
+		data-l-clock="{{ lang('TZC_CHK_BROWSER_CLOCK')|e('html_attr') }}"
+		data-l-clock-ko="{{ lang('TZC_CHK_BROWSER_CLOCK_KO')|e('html_attr') }}"
+		data-server-time="{{ TZC_SERVER_MS }}"></ul>
+</fieldset>
+
+<fieldset class="tzc-chk-group">
+	<legend>{{ lang('TZC_CHK_TOOLS') }}</legend>
+	<p>
+		<a class="button2" href="{{ U_TZC_FIX_CONFIG }}" data-tzc-confirm="{{ lang('TZC_CHK_FIX_CONFIG_CONFIRM')|e('html_attr') }}"><i class="icon fa-wrench fa-fw" aria-hidden="true"></i> {{ lang('TZC_CHK_FIX_CONFIG') }}</a>
+		<a class="button2" href="{{ U_TZC_RESET_JOB }}" data-tzc-confirm="{{ lang('TZC_CHK_RESET_JOB_CONFIRM')|e('html_attr') }}"><i class="icon fa-unlock fa-fw" aria-hidden="true"></i> {{ lang('TZC_CHK_RESET_JOB') }}</a>
+		<a class="button2" href="{{ U_TZC_DATABASE }}"><i class="icon fa-database fa-fw" aria-hidden="true"></i> {{ lang('ACP_TZC_DATABASE') }}</a>
+	</p>
+</fieldset>
+
+{% include '@salvocortesiano_timezoneclock/acp_tzc_footer.html' %}

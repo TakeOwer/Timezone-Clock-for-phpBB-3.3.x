@@ -1,0 +1,11 @@
+	<div class="tzc-credits">
+		{{ lang('TZC_CREDITS') }}
+		<br><span class="tzc-credits-small">{{ lang('TZC_CREDITS_DATA') }}</span>
+	</div>
+</div>
+<div id="tzc-i18n" hidden data-title="{{ lang('TZC_CONFIRM_TITLE')|e('html_attr') }}" data-yes="{{ lang('YES')|e('html_attr') }}" data-no="{{ lang('NO')|e('html_attr') }}" data-ok="{{ lang('TZC_OK')|e('html_attr') }}"></div>
+
+<script src="{{ TZC_EXT_URL }}styles/all/template/js/tzc.js?v={{ TZC_ASSET_VER }}"></script>
+<script src="{{ TZC_EXT_URL }}styles/all/template/js/tzc_editor.js?v={{ TZC_ASSET_VER }}"></script>
+<script src="{{ TZC_EXT_URL }}adm/style/tzc_acp.js?v={{ TZC_ASSET_VER }}"></script>
+{% INCLUDE 'overall_footer.html' %}

@@ -1,0 +1,165 @@
+{% include '@salvocortesiano_timezoneclock/acp_tzc_header.html' %}
+
+<p class="tzc-intro">{{ lang('TZC_DATABASE_INTRO') }}</p>
+
+<div class="tzc-cards">
+	<div class="tzc-stat">
+		<div class="tzc-stat-icon"><i class="icon fa-clock-o" aria-hidden="true"></i></div>
+		<div class="tzc-stat-body">
+			<div class="tzc-stat-title">{{ lang('TZC_STAT_TZDATA') }}</div>
+			<div class="tzc-stat-value">{{ TZC_TZDATA_VERSION }}</div>
+			<div class="tzc-stat-meta">{{ lang('TZC_STAT_ZONES', TZC_ZONES_CANONICAL, TZC_ZONES_ALIASES) }}</div>
+			<div class="tzc-stat-meta">{{ lang('TZC_STAT_UPDATED') }}{{ lang('COLON') }} {{ TZC_TZ_UPDATED }}</div>
+			<div class="tzc-stat-meta">{{ lang('TZC_STAT_CHECKED') }}{{ lang('COLON') }} {{ TZC_TZ_CHECKED }}</div>
+			<div class="tzc-stat-meta">{{ lang('TZC_STAT_PKG') }}{{ lang('COLON') }} {{ TZC_TZ_PKG }}</div>
+		</div>
+	</div>
+	<div class="tzc-stat">
+		<div class="tzc-stat-icon"><i class="icon fa-map-marker" aria-hidden="true"></i></div>
+		<div class="tzc-stat-body">
+			<div class="tzc-stat-title">{{ lang('TZC_STAT_GEO') }}</div>
+			<div class="tzc-stat-value">{{ TZC_GEO_COUNT }}</div>
+			<div class="tzc-stat-meta">{{ lang('TZC_STAT_GEO_LOADED') }}{{ lang('COLON') }} {{ TZC_GEO_LOADED }}</div>
+			<div class="tzc-stat-meta">{{ lang('TZC_STAT_UPDATED') }}{{ lang('COLON') }} {{ TZC_GEO_UPDATED }}</div>
+			<div class="tzc-stat-meta">{{ lang('TZC_STAT_GEO_NEXT') }}{{ lang('COLON') }} {{ TZC_GEO_DATASET_LABEL }}</div>
+		</div>
+	</div>
+	<div class="tzc-stat">
+		<div class="tzc-stat-icon"><i class="icon fa-refresh" aria-hidden="true"></i></div>
+		<div class="tzc-stat-body">
+			<div class="tzc-stat-title">{{ lang('TZC_STAT_CRON') }}</div>
+			<div class="tzc-stat-meta">{{ TZC_CRON_STATUS }}</div>
+			<div class="tzc-stat-meta">{{ lang('TZC_STAT_PHP_TZDB') }}{{ lang('COLON') }} {{ TZC_PHP_TZDB }}</div>
+			<div class="tzc-stat-meta"><a href="{{ U_TZC_SETTINGS_UPDATES }}">{{ lang('TZC_STAT_CRON_SETTINGS') }}</a></div>
+		</div>
+	</div>
+</div>
+
+<fieldset>
+	<legend>{{ lang('TZC_UPDATE_NOW') }}</legend>
+
+	<div class="tzc-job" id="tzc-job"
+		data-url="{{ U_ACTION }}"
+		data-hash="{{ TZC_JOB_HASH }}"
+		data-state="{{ TZC_JOB_STATE }}"
+		data-l-confirm-cities="{{ lang('TZC_CONFIRM_CITIES')|e('html_attr') }}"
+		data-l-done="{{ lang('TZC_JOB_DONE')|e('html_attr') }}"
+		data-l-failed="{{ lang('TZC_JOB_FAILED')|e('html_attr') }}"
+		data-l-network="{{ lang('TZC_JOB_NETWORK')|e('html_attr') }}"
+		data-l-resume="{{ lang('TZC_JOB_RESUME')|e('html_attr') }}"
+		data-l-busy="{{ lang('TZC_JOB_BUSY')|e('html_attr') }}"
+		data-l-time="{{ lang('TZC_JOB_TIME')|e('html_attr') }}"
+		data-l-min="{{ lang('TZC_JOB_MIN')|e('html_attr') }}"
+		data-l-sec="{{ lang('TZC_JOB_SEC')|e('html_attr') }}">
+
+		<div class="tzc-job-actions">
+			<button type="button" class="button1 tzc-job-btn" data-job="tzdata"><i class="icon fa-clock-o fa-fw" aria-hidden="true"></i> {{ lang('TZC_BTN_TZDATA') }}</button>
+			<button type="button" class="button2 tzc-job-btn" data-job="cities"{% if not S_TZC_ZIP %} disabled="disabled" title="{{ lang('TZC_ERR_NO_ZIP')|e('html_attr') }}"{% endif %}><i class="icon fa-map-marker fa-fw" aria-hidden="true"></i> {{ lang('TZC_BTN_CITIES') }}</button>
+			<button type="button" class="button2 tzc-job-btn" data-job="all"{% if not S_TZC_ZIP %} disabled="disabled"{% endif %}><i class="icon fa-refresh fa-fw" aria-hidden="true"></i> {{ lang('TZC_BTN_ALL') }}</button>
+			<label class="tzc-force"><input type="checkbox" id="tzc-force" value="1"> {{ lang('TZC_FORCE') }}</label>
+		</div>
+		<p class="tzc-job-explain">{{ lang('TZC_UPDATE_EXPLAIN') }}</p>
+
+		<div class="tzc-progress" hidden>
+			<div class="tzc-progress-top">
+				<span class="tzc-progress-text"></span>
+				<span class="tzc-progress-pct">0%</span>
+			</div>
+			<div class="tzc-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="tzc-progress-fill"></div></div>
+			<div class="tzc-progress-bottom">
+				<span class="tzc-progress-time"></span>
+				<button type="button" class="button2 tzc-job-cancel">{{ lang('TZC_BTN_CANCEL') }}</button>
+			</div>
+		</div>
+
+		<div class="tzc-job-result" hidden></div>
+	</div>
+</fieldset>
+
+<fieldset>
+	<legend>{{ lang('TZC_CHANGELOG') }}</legend>
+	{% if tzc_changelog %}
+	<table class="table1 zebra-table tzc-table">
+		<thead>
+			<tr>
+				<th style="width: 18%;">{{ lang('TZC_COL_DATE') }}</th>
+				<th style="width: 12%;">{{ lang('TZC_COL_ORIGIN') }}</th>
+				<th>{{ lang('TZC_COL_DETAILS') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for entry in tzc_changelog %}
+			<tr>
+				<td>{{ entry.TIME }}</td>
+				<td><span class="tzc-pill tzc-pill-{{ entry.TYPE }}">{{ entry.ORIGIN }}</span></td>
+				<td>{{ entry.TEXT }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<form method="post" action="{{ U_TZC_CLEAR_LOG }}" class="tzc-inline-form">
+		<input type="submit" class="button2" name="clear_log" value="{{ lang('TZC_CLEAR_LOG') }}" data-tzc-confirm="{{ lang('TZC_CLEAR_LOG_CONFIRM')|e('html_attr') }}">
+		{{ S_FORM_TOKEN }}
+	</form>
+	{% else %}
+	<p class="tzc-muted">{{ lang('TZC_CHANGELOG_EMPTY') }}</p>
+	{% endif %}
+</fieldset>
+
+<fieldset>
+	<legend>{{ lang('TZC_ZONE_BROWSER') }}</legend>
+	<p class="tzc-muted">{{ lang('TZC_ZONE_BROWSER_EXPLAIN', U_TZC_CITIES) }}</p>
+	<div class="tzc-filter">
+		<input type="search" class="inputbox tzc-zone-filter" placeholder="{{ lang('TZC_ZONE_FILTER')|e('html_attr') }}">
+		<label><input type="checkbox" class="tzc-zone-dst"> {{ lang('TZC_ZONE_ONLY_DST') }}</label>
+		<span class="tzc-zone-count"></span>
+	</div>
+	<div class="tzc-table-wrap">
+		<table class="table1 zebra-table tzc-table tzc-zones" id="tzc-zone-table"
+			data-url="{{ U_ACTION }}"
+			data-hash="{{ TZC_CITY_HASH }}"
+			data-l-in-bar="{{ lang('TZC_IN_BAR')|e('html_attr') }}"
+			data-l-adding="{{ lang('TZC_ADDING')|e('html_attr') }}"
+			data-l-removing="{{ lang('TZC_REMOVING')|e('html_attr') }}"
+			data-l-add="{{ lang('TZC_BTN_ADD_BAR')|e('html_attr') }}"
+			data-l-remove="{{ lang('TZC_BTN_REMOVE_CITY')|e('html_attr') }}"
+			data-l-remove-confirm="{{ lang('TZC_REMOVE_CONFIRM')|e('html_attr') }}"
+			data-l-error="{{ lang('TZC_PICKER_ERROR')|e('html_attr') }}">
+			<thead>
+				<tr>
+					<th>{{ lang('TZC_COL_ZONE') }}</th>
+					<th>{{ lang('TZC_COL_COUNTRIES') }}</th>
+					<th>{{ lang('TZC_COL_OFFSET') }}</th>
+					<th>{{ lang('TZC_COL_DST') }}</th>
+					<th>{{ lang('TZC_COL_NEXT') }}</th>
+					<th>{{ lang('TZC_COL_BAR') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for zone in tzc_zones %}
+				<tr data-dst="{% if zone.S_DST %}1{% else %}0{% endif %}">
+					<td><strong>{{ zone.NAME }}</strong></td>
+					<td>{% if zone.CC %}<img src="{{ TZC_EXT_URL }}styles/all/theme/flags/{{ zone.CC }}.svg" class="tzc-mini-flag" alt="" loading="lazy"> {% endif %}{{ zone.COUNTRIES }}</td>
+					<td class="tzc-nowrap">{{ zone.OFFSET }}{% if zone.ABBR %} <span class="tzc-muted">({{ zone.ABBR }})</span>{% endif %}</td>
+					<td>{% if zone.S_DST %}<span class="tzc-pill tzc-pill-dst">{{ lang('YES') }}</span>{% else %}<span class="tzc-muted">&ndash;</span>{% endif %}</td>
+					<td class="tzc-nowrap">{% if zone.NEXT %}{{ zone.NEXT }} &rarr; {{ zone.NEXT_TO }}{% else %}<span class="tzc-muted">{{ lang('TZC_NO_CHANGES') }}</span>{% endif %}</td>
+					<td class="tzc-nowrap">
+						<div class="tzc-barcell" data-zone="{{ zone.NAME }}">
+						{% if zone.S_IN_BAR %}
+							<span class="tzc-inbar"><i class="icon fa-check fa-fw" aria-hidden="true"></i> {{ lang('TZC_IN_BAR') }}</span>
+							{% for city in zone.cities %}
+							<button type="button" class="button2 tzc-removecity" data-city="{{ city.ID }}" data-name="{{ city.NAME|e('html_attr') }}"><i class="icon fa-times fa-fw" aria-hidden="true"></i> {{ lang('TZC_BTN_REMOVE_CITY', city.NAME) }}</button>
+							{% endfor %}
+						{% else %}
+							<button type="button" class="button2 tzc-addzone" data-zone="{{ zone.NAME }}"><i class="icon fa-plus fa-fw" aria-hidden="true"></i> {{ lang('TZC_BTN_ADD_BAR') }}</button>
+						{% endif %}
+						</div>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</fieldset>
+
+{% include '@salvocortesiano_timezoneclock/acp_tzc_footer.html' %}

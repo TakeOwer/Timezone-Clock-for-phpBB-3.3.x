@@ -1,0 +1,68 @@
+{% include '@salvocortesiano_timezoneclock/acp_tzc_header.html' %}
+
+<p class="tzc-intro">{{ lang('TZC_SETTINGS_INTRO') }}</p>
+
+{% if S_TZC_ERROR %}
+<div class="errorbox">
+	<h3>{{ lang('WARNING') }}</h3>
+	<p>{{ TZC_ERROR_MSG }}</p>
+</div>
+{% endif %}
+
+<div class="tzc-ed-preview tzc-preview-box" data-payload="{{ TZC_PREVIEW }}" data-form="tzc-settings-form" data-mode="admin">
+	<div class="tzc-preview-head"><i class="icon fa-eye fa-fw" aria-hidden="true"></i> {{ lang('TZC_PREVIEW') }} <span>{{ lang('TZC_PREVIEW_LIVE') }}</span></div>
+	<div class="tzc-root"></div>
+	<p class="tzc-ed-preview-empty">{{ lang('TZC_PREVIEW_EMPTY', U_TZC_CITIES) }}</p>
+</div>
+
+<form id="tzc-settings-form" method="post" action="{{ U_ACTION }}">
+	<div class="tzc-secnav">
+		{% for section in tzc_sections %}<a href="#tzc-sec-{{ section.ID }}">{{ section.TITLE }}</a>{% endfor %}
+	</div>
+
+	{% for section in tzc_sections %}
+	<fieldset id="tzc-sec-{{ section.ID }}" class="tzc-section">
+		<legend>{{ section.TITLE }}</legend>
+		{% if section.EXPLAIN %}<p class="tzc-sec-explain">{{ section.EXPLAIN }}</p>{% endif %}
+
+		{% for field in section.fields %}
+		<dl{% if field.KEY == 'pages_list' %} data-tzc-toggle="tzc_pages" data-tzc-when="custom"{% endif %}>
+			<dt>
+				<label for="{{ field.NAME }}">{{ field.LABEL }}{{ lang('COLON') }}</label>
+				{% if field.S_UCP %}<span class="tzc-ucp-tag" title="{{ lang('TZC_UCP_TAG_EXPLAIN') }}">{{ lang('TZC_UCP_TAG') }}</span>{% endif %}
+				{% if field.EXPLAIN %}<br><span>{{ field.EXPLAIN }}</span>{% endif %}
+			</dt>
+			<dd>
+				{% if field.TYPE == 'bool' %}
+				<label><input type="radio" class="radio" name="{{ field.NAME }}" id="{{ field.NAME }}" value="1"{% if field.VALUE %} checked="checked"{% endif %}{% if field.S_PREVIEW %} data-tzc-opt="{{ field.KEY }}" data-tzc-type="int"{% endif %}> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="{{ field.NAME }}" value="0"{% if not field.VALUE %} checked="checked"{% endif %}{% if field.S_PREVIEW %} data-tzc-opt="{{ field.KEY }}" data-tzc-type="int"{% endif %}> {{ lang('NO') }}</label>
+				{% elseif field.TYPE == 'enum' %}
+				<select name="{{ field.NAME }}" id="{{ field.NAME }}"{% if field.S_PREVIEW %} data-tzc-opt="{{ field.KEY }}"{% endif %}>
+					{% for choice in field.choices %}<option value="{{ choice.VALUE }}"{% if choice.S_SELECTED %} selected="selected"{% endif %}>{{ choice.LABEL }}</option>{% endfor %}
+				</select>
+				{% elseif field.TYPE == 'multi' %}
+				<div class="tzc-checks">
+					{% for choice in field.choices %}<label class="tzc-check"><input type="checkbox" name="{{ field.NAME }}[]" value="{{ choice.VALUE }}"{% if choice.S_SELECTED %} checked="checked"{% endif %}> {{ choice.LABEL }}</label>{% endfor %}
+				</div>
+				{% elseif field.TYPE == 'int' %}
+				<input type="number" class="inputbox autowidth" name="{{ field.NAME }}" id="{{ field.NAME }}" value="{{ field.VALUE }}" min="{{ field.MIN }}" max="{{ field.MAX }}"{% if field.S_PREVIEW %} data-tzc-opt="{{ field.KEY }}" data-tzc-type="int"{% endif %}>
+				<span class="tzc-range">{{ field.MIN }} &ndash; {{ field.MAX }}</span>
+				{% elseif field.TYPE == 'color' %}
+				<input type="color" name="{{ field.NAME }}" id="{{ field.NAME }}" value="{{ field.VALUE }}" class="tzc-color"{% if field.S_PREVIEW %} data-tzc-opt="{{ field.KEY }}"{% endif %}>
+				{% else %}
+				<input type="url" class="inputbox" name="{{ field.NAME }}" id="{{ field.NAME }}" value="{{ field.VALUE }}" size="70" maxlength="255">
+				{% endif %}
+			</dd>
+		</dl>
+		{% endfor %}
+	</fieldset>
+	{% endfor %}
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}">&nbsp;
+		<input class="button2" type="submit" name="reset_defaults" value="{{ lang('TZC_RESET_DEFAULTS') }}" data-tzc-confirm="{{ lang('TZC_RESET_DEFAULTS_CONFIRM')|e('html_attr') }}">
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+{% include '@salvocortesiano_timezoneclock/acp_tzc_footer.html' %}

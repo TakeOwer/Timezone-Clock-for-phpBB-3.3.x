@@ -1,0 +1,23 @@
+{% INCLUDE 'overall_header.html' %}
+<link href="{{ TZC_EXT_URL }}styles/all/theme/tzc.css?v={{ TZC_ASSET_VER }}" rel="stylesheet">
+<link href="{{ TZC_EXT_URL }}styles/all/theme/tzc_editor.css?v={{ TZC_ASSET_VER }}" rel="stylesheet">
+<link href="{{ TZC_EXT_URL }}adm/style/tzc_acp.css?v={{ TZC_ASSET_VER }}" rel="stylesheet">
+
+<div class="tzc-acp">
+	<h1 class="tzc-title"><i class="icon fa-globe fa-fw" aria-hidden="true"></i> {{ lang('ACP_TZC_TITLE') }} <small>{{ lang('ACP_TZC_' ~ TZC_MODE|upper) }}</small></h1>
+
+	<div class="tzc-topbadges">
+		<span class="tzc-tb"><span class="tzc-tb-k">{{ lang('TZC_BADGE_EXT') }}</span><span class="tzc-tb-v">{{ TZC_EXT_VERSION }}</span></span>
+		<span class="tzc-tb"><span class="tzc-tb-k">PHP</span><span class="tzc-tb-v">{{ TZC_PHP_VERSION }}</span></span>
+		<span class="tzc-tb"><span class="tzc-tb-k">phpBB</span><span class="tzc-tb-v">{{ TZC_PHPBB_VERSION }}</span></span>
+		<span class="tzc-tb"><span class="tzc-tb-k">{{ lang('TZC_BADGE_LICENSE') }}</span><span class="tzc-tb-v">GPL-2.0</span></span>
+		<span class="tzc-tb tzc-tb-accent"><span class="tzc-tb-k">tzdata</span><span class="tzc-tb-v">{{ TZC_TZDATA_VERSION }}</span></span>
+		<span class="tzc-tb"><span class="tzc-tb-k">{{ lang('TZC_BADGE_BAR') }}</span><span class="tzc-tb-v tzc-bar-count">{{ TZC_BAR_COUNT }}</span></span>
+		<span class="tzc-tb"><span class="tzc-tb-k">{{ lang('TZC_BADGE_CATALOG') }}</span><span class="tzc-tb-v">{{ TZC_GEO_COUNT }}</span></span>
+	</div>
+
+	<nav class="tzc-tabs">
+		{% for tab in tzc_tabs %}
+		<a href="{{ tab.U_TAB }}" class="tzc-tab{% if tab.S_ACTIVE %} tzc-tab-active{% endif %}"><i class="icon {{ tab.ICON }} fa-fw" aria-hidden="true"></i> {{ tab.TITLE }}</a>
+		{% endfor %}
+	</nav>
