@@ -16,6 +16,34 @@ World clock bar for phpBB 3.3.x. It shows the time of the cities you choose in a
 - **Languages:** English, Italian
 
 ---
+<img width="1844" height="151" alt="Screenshot 2026-10-06 155852" src="https://github.com/user-attachments/assets/ab550868-5b72-49bd-b91a-00e172615d48" />
+---
+<img width="1846" height="54" alt="Screenshot 2026-10-06 155858" src="https://github.com/user-attachments/assets/61caffcc-374f-40fb-a12f-2d6d75db3c39" />
+---
+<img width="587" height="447" alt="Screenshot 2026-10-06 155914" src="https://github.com/user-attachments/assets/5d435f90-1f8f-4c52-99e5-449c1958b5fc" />
+---
+<img width="1830" height="1163" alt="Screenshot 2026-10-06 155928" src="https://github.com/user-attachments/assets/7b51abc1-0ae1-4df9-b5ee-218749389f68" />
+---
+<img width="2299" height="723" alt="Screenshot 2026-10-06 155943" src="https://github.com/user-attachments/assets/7b6a831d-8ddc-4cb8-9ab4-9e30c8aab7d5" />
+---
+<img width="2289" height="758" alt="Screenshot 2026-10-06 155950" src="https://github.com/user-attachments/assets/6e44371f-2b4b-4fd7-ba45-32765451fbc0" />
+---
+<img width="2287" height="673" alt="Screenshot 2026-10-06 155957" src="https://github.com/user-attachments/assets/9cf073c9-eb72-4e95-a950-ad7ecdfc281e" />
+---
+<img width="2290" height="596" alt="Screenshot 2026-10-06 160009" src="https://github.com/user-attachments/assets/e1466fbd-b1c6-4889-a9f7-d7709bc1fa0c" />
+---
+<img width="2295" height="389" alt="Screenshot 2026-10-06 160026" src="https://github.com/user-attachments/assets/c7bc0f3c-be24-4679-a635-40ee47b2f046" />
+---
+<img width="2274" height="1154" alt="Screenshot 2026-10-06 160033" src="https://github.com/user-attachments/assets/e4d0be49-8aa7-49be-a4f9-636a5d768d94" />
+---
+<img width="2297" height="491" alt="Screenshot 2026-10-06 160044" src="https://github.com/user-attachments/assets/3cdf4aee-13aa-4bad-b53c-53a75bc77491" />
+---
+<img width="2293" height="810" alt="Screenshot 2026-10-06 160057" src="https://github.com/user-attachments/assets/fe5ea4bc-143e-4268-be88-235ab101757f" />
+---
+<img width="2296" height="566" alt="Screenshot 2026-10-06 160117" src="https://github.com/user-attachments/assets/06d81cc7-9881-4a00-8ce3-c700429f953d" />
+---
+<img width="2294" height="949" alt="Screenshot 2026-10-06 160130" src="https://github.com/user-attachments/assets/80ed189c-c6d8-4e2a-b993-67c9b467942d" />
+---
 
 ## Table of contents
 
