@@ -1,48 +1,14 @@
 # Timezone Clock for phpBB 3.3
 
-![Version](https://img.shields.io/badge/version-1.0.6-105080)
-![phpBB](https://img.shields.io/badge/phpBB-3.3.x-377a33)
-![PHP](https://img.shields.io/badge/PHP-%3E%3D7.4-377a33)
-![License](https://img.shields.io/badge/license-GPL--2.0--only-7f7f7f)
-
-
 World clock bar for phpBB 3.3.x. It shows the time of the cities you choose in a **carousel**, a continuously scrolling **ticker** or a **grid**. Time zones always stay correct thanks to automatic updates from the official **IANA** time zone database.
 
 - **Package:** `salvocortesiano/timezoneclock`
-- **Version:** 1.0.6
+- **Version:** 1.0.9
 - **Author:** Salvo Cortesiano — <https://netshadows.de> — support@netshadows.de
 - **License:** [GPL-2.0](license.txt)
 - **Inspired by:** "Timezone Clock" by HiFiKabin & ctrstudio, rewritten from scratch.
 - **Languages:** English, Italian
 
----
-<img width="1844" height="151" alt="Screenshot 2026-10-06 155852" src="https://github.com/user-attachments/assets/ab550868-5b72-49bd-b91a-00e172615d48" />
----
-<img width="1846" height="54" alt="Screenshot 2026-10-06 155858" src="https://github.com/user-attachments/assets/61caffcc-374f-40fb-a12f-2d6d75db3c39" />
----
-<img width="587" height="447" alt="Screenshot 2026-10-06 155914" src="https://github.com/user-attachments/assets/5d435f90-1f8f-4c52-99e5-449c1958b5fc" />
----
-<img width="1830" height="1163" alt="Screenshot 2026-10-06 155928" src="https://github.com/user-attachments/assets/7b51abc1-0ae1-4df9-b5ee-218749389f68" />
----
-<img width="2299" height="723" alt="Screenshot 2026-10-06 155943" src="https://github.com/user-attachments/assets/7b6a831d-8ddc-4cb8-9ab4-9e30c8aab7d5" />
----
-<img width="2289" height="758" alt="Screenshot 2026-10-06 155950" src="https://github.com/user-attachments/assets/6e44371f-2b4b-4fd7-ba45-32765451fbc0" />
----
-<img width="2287" height="673" alt="Screenshot 2026-10-06 155957" src="https://github.com/user-attachments/assets/9cf073c9-eb72-4e95-a950-ad7ecdfc281e" />
----
-<img width="2290" height="596" alt="Screenshot 2026-10-06 160009" src="https://github.com/user-attachments/assets/e1466fbd-b1c6-4889-a9f7-d7709bc1fa0c" />
----
-<img width="2295" height="389" alt="Screenshot 2026-10-06 160026" src="https://github.com/user-attachments/assets/c7bc0f3c-be24-4679-a635-40ee47b2f046" />
----
-<img width="2274" height="1154" alt="Screenshot 2026-10-06 160033" src="https://github.com/user-attachments/assets/e4d0be49-8aa7-49be-a4f9-636a5d768d94" />
----
-<img width="2297" height="491" alt="Screenshot 2026-10-06 160044" src="https://github.com/user-attachments/assets/3cdf4aee-13aa-4bad-b53c-53a75bc77491" />
----
-<img width="2293" height="810" alt="Screenshot 2026-10-06 160057" src="https://github.com/user-attachments/assets/fe5ea4bc-143e-4268-be88-235ab101757f" />
----
-<img width="2296" height="566" alt="Screenshot 2026-10-06 160117" src="https://github.com/user-attachments/assets/06d81cc7-9881-4a00-8ce3-c700429f953d" />
----
-<img width="2294" height="949" alt="Screenshot 2026-10-06 160130" src="https://github.com/user-attachments/assets/80ed189c-c6d8-4e2a-b993-67c9b467942d" />
 ---
 
 ## Table of contents
@@ -403,6 +369,7 @@ Replace `php` with the full path of your PHP binary if needed. The command shows
 | The city import stops | Lower "Maximum duration of each step" and "Download block size", then try again. |
 | City search is limited | Import the city catalogue from the **Time zones and updates** page. |
 | Flags are not shown on Windows | Set "Flag type" to **SVG image**. |
+| The bar behaves strangely | Open the browser console (F12) and type `TZC.debug()`. It shows a table with the loaded version, mode, number of cities, computed and measured round length (they must match), position and the reason of a possible pause. If the version is not the installed one, reload with Ctrl+F5. |
 
 ---
 
@@ -459,6 +426,29 @@ salvocortesiano/timezoneclock/
 ---
 
 ## 15. Changelog
+
+### 1.0.9
+- **Ticker independent of when it is measured.** Version 1.0.8 measured the round length only once: if the page was hidden or incomplete at that moment (theme preloader, CSS or panels loaded late, width changing), the value stayed wrong and the bar jumped, made Rome disappear while dragging, or did not show the searched city. Now:
+  - the round length is measured **on every cycle** as the exact distance between a card and its copy;
+  - the bar measures itself again whenever it changes size or becomes visible (`ResizeObserver`) and when the page has finished loading;
+  - the measurement is repeated before centring the city chosen in the search.
+- **Manual dragging** (ticker and carousel): no more text selection or dragging of the flags instead of the cards.
+- New `TZC.debug()` diagnostic command for the browser console.
+- Tested in a real phpBB page also with the page hidden for 2 seconds, CSS loaded late and the page width changing, dragging in both directions with Rome as the first city and searching Rome both from the Europe group and from "Recently searched".
+
+### 1.0.8
+- **Fixed the ticker bug** that made the bar jump and left the searched city out of view. The length of one round of cards was measured while the card copies used for endless scrolling were still hidden, so it was half the real value (e.g. 1866 px instead of 3738). As a result:
+  - while scrolling, the bar wrapped at the wrong point and seemed to "refresh", making cities disappear (for example Rome, the first one);
+  - when choosing a city from the search, the bar stopped at the wrong position and the city stayed out of view.
+
+  The round is now measured on the real positions of the first and last visible card (cities hidden on mobile included) and measured again once the fonts are loaded.
+- Tested in a real phpBB page (jQuery, core.js, forum_fn.js and prosilver CSS) at 1152 px, 1820 px and 390 px: a full round without jumps, clicks on the cards while scrolling without jumps, mouse search of all 21 cities with the city always visible and highlighted, scrolling resuming afterwards.
+
+### 1.0.7
+- City search in **ticker** mode: the bar scrolled to a copy of the chosen card (the ticker duplicates the cards for endless scrolling) but highlighted the original one, out of view. Now every copy is highlighted and the chosen city is always visible and centred.
+- **Automatic scrolling did not resume** until you clicked outside the bar: a clicked button (search, close, collapse/expand) kept the focus and kept the bar paused. Now focus only pauses the bar during **keyboard** navigation in the cards area, and the mouse position is read in real time.
+- After choosing a city the scrolling stops for 8 seconds and then resumes by itself; the same happens after closing the search (X, Esc or a click outside) and after collapse/expand.
+- The highlight of the found card is no longer clipped at the top.
 
 ### 1.0.6
 - **City search in the bar** (🔍 button): search box, recently searched cities, collapsible groups by continent, current time of every city, keyboard navigation. Choosing a city scrolls the bar to its card and highlights it.
