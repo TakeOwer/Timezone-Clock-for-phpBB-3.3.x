@@ -1,0 +1,114 @@
+{% include 'ucp_header.html' %}
+{% INCLUDECSS '@salvocortesiano_timezoneclock/tzc.css' %}
+{% INCLUDECSS '@salvocortesiano_timezoneclock/tzc_editor.css' %}
+{% INCLUDEJS '@salvocortesiano_timezoneclock/js/tzc.js' %}
+{% INCLUDEJS '@salvocortesiano_timezoneclock/js/tzc_editor.js' %}
+
+<form id="tzc-ucp-form" method="post" action="{{ U_ACTION }}">
+
+<h2>{{ lang('UCP_TZC_SETTINGS') }}</h2>
+
+<div class="panel">
+	<div class="inner">
+		<p>{{ lang('TZC_UCP_INTRO') }}</p>
+
+		<div class="tzc-ed-preview tzc-ucp-preview" data-payload="{{ TZC_PREVIEW }}" data-form="tzc-ucp-form" data-picker="#tzc-picker" data-source="{{ TZC_SOURCE }}">
+			<h3>{{ lang('TZC_PREVIEW') }}</h3>
+			<div class="tzc-root"></div>
+			<p class="tzc-ed-preview-empty">{{ lang('TZC_PREVIEW_NOCITIES') }}</p>
+		</div>
+
+		<fieldset>
+			{% if S_TZC_HIDE %}
+			<dl>
+				<dt><label for="tzc_show">{{ lang('TZC_UCP_SHOW') }}{{ lang('COLON') }}</label><br><span>{{ lang('TZC_UCP_SHOW_EXPLAIN') }}</span></dt>
+				<dd>
+					<label><input type="radio" class="radio" name="tzc_show" id="tzc_show" value="1" data-tzc-opt="show"{% if TZC_SHOW %} checked="checked"{% endif %}> {{ lang('YES') }}</label>
+					<label><input type="radio" class="radio" name="tzc_show" value="0" data-tzc-opt="show"{% if not TZC_SHOW %} checked="checked"{% endif %}> {{ lang('NO') }}</label>
+				</dd>
+			</dl>
+			{% endif %}
+
+			{% if S_TZC_CITIES %}
+			<dl>
+				<dt><label for="tzc_source">{{ lang('TZC_UCP_SOURCE') }}{{ lang('COLON') }}</label><br><span>{{ lang('TZC_UCP_SOURCE_EXPLAIN', TZC_MAX) }}</span></dt>
+				<dd>
+					<select name="tzc_source" id="tzc_source" data-tzc-opt="source">
+						<option value="admin"{% if TZC_SOURCE == 'admin' %} selected="selected"{% endif %}>{{ lang('TZC_UCP_SOURCE_ADMIN') }}</option>
+						<option value="mine"{% if TZC_SOURCE == 'mine' %} selected="selected"{% endif %}>{{ lang('TZC_UCP_SOURCE_MINE') }}</option>
+						<option value="both"{% if TZC_SOURCE == 'both' %} selected="selected"{% endif %}>{{ lang('TZC_UCP_SOURCE_BOTH') }}</option>
+					</select>
+				</dd>
+			</dl>
+			{% endif %}
+		</fieldset>
+	</div>
+</div>
+
+{% if S_TZC_CITIES %}
+<div class="panel" data-tzc-toggle="tzc_source" data-tzc-when="mine,both">
+	<div class="inner">
+		<h3>{{ lang('TZC_UCP_MY_CITIES') }}</h3>
+		{% if not S_TZC_GEO %}<p>{{ lang('TZC_UCP_GEO_HINT') }}</p>{% endif %}
+		<div class="tzc-ed-picker" id="tzc-picker"
+			data-search-url="{{ U_TZC_SEARCH }}"
+			data-max="{{ TZC_MAX }}"
+			data-flags="{{ TZC_FLAGS_URL }}"
+			data-locale="{{ lang('TZC_LOCALE') }}"
+			data-mobile-toggle="0"
+			data-i18n="{{ TZC_PICKER_I18N }}"
+			data-initial="{{ TZC_INITIAL }}">
+			<div class="tzc-ed-search">
+				<input type="search" class="inputbox tzc-ed-input" placeholder="{{ lang('TZC_PICKER_PLACEHOLDER')|e('html_attr') }}" autocomplete="off" aria-label="{{ lang('TZC_PICKER_PLACEHOLDER')|e('html_attr') }}">
+				<button type="button" class="button1 tzc-ed-addbtn"><i class="icon fa-plus fa-fw" aria-hidden="true"></i> {{ lang('TZC_PICKER_ADD') }}</button>
+				<ul class="tzc-ed-results" role="listbox" hidden></ul>
+			</div>
+			<p class="tzc-ed-steps">{{ lang('TZC_PICKER_STEPS') }}</p>
+			<div class="tzc-ed-head">
+				<span>{{ lang('TZC_PICKER_HELP') }}</span>
+				<span class="tzc-ed-count"></span>
+			</div>
+			<ol class="tzc-ed-list"></ol>
+			<p class="tzc-ed-emptymsg">{{ lang('TZC_UCP_NO_CITIES') }}</p>
+			<input type="hidden" name="tzc_cities_json" class="tzc-ed-field" value="">
+		</div>
+	</div>
+</div>
+{% endif %}
+
+{% for section in tzc_sections %}
+<div class="panel">
+	<div class="inner">
+		<h3>{{ section.TITLE }}</h3>
+		<fieldset>
+			{% for field in section.fields %}
+			<dl>
+				<dt><label for="{{ field.NAME }}">{{ field.LABEL }}{{ lang('COLON') }}</label>{% if field.EXPLAIN %}<br><span>{{ field.EXPLAIN }}</span>{% endif %}</dt>
+				<dd>
+					{% if field.TYPE == 'int' %}
+					<input type="number" class="inputbox autowidth" name="{{ field.NAME }}" id="{{ field.NAME }}" value="{{ field.VALUE }}" min="{{ field.MIN }}" max="{{ field.MAX }}" placeholder="{{ field.DEFAULT_TEXT|e('html_attr') }}" data-tzc-opt="{{ field.KEY }}" data-tzc-type="int">
+					<span>{{ field.DEFAULT_TEXT }}</span>
+					{% else %}
+					<select name="{{ field.NAME }}" id="{{ field.NAME }}" data-tzc-opt="{{ field.KEY }}"{% if field.S_INT %} data-tzc-type="int"{% endif %}>
+						<option value="">{{ field.DEFAULT_TEXT }}</option>
+						{% for choice in field.choices %}<option value="{{ choice.VALUE }}"{% if choice.S_SELECTED %} selected="selected"{% endif %}>{{ choice.LABEL }}</option>{% endfor %}
+					</select>
+					{% endif %}
+				</dd>
+			</dl>
+			{% endfor %}
+		</fieldset>
+	</div>
+</div>
+{% endfor %}
+
+<fieldset class="submit-buttons">
+	<input type="submit" name="reset" value="{{ lang('TZC_UCP_RESET') }}" class="button2" data-tzc-confirm="{{ lang('TZC_UCP_RESET_CONFIRM')|e('html_attr') }}">&nbsp;
+	<input type="submit" name="submit" value="{{ lang('SUBMIT') }}" class="button1">
+	{{ S_FORM_TOKEN }}
+</fieldset>
+
+</form>
+<div id="tzc-i18n" hidden data-title="{{ lang('TZC_CONFIRM_TITLE')|e('html_attr') }}" data-yes="{{ lang('YES')|e('html_attr') }}" data-no="{{ lang('NO')|e('html_attr') }}" data-ok="{{ lang('TZC_OK')|e('html_attr') }}"></div>
+
+{% include 'ucp_footer.html' %}

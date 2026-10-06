@@ -1,0 +1,305 @@
+/**
+ * Timezone Clock - city picker (ACP and UCP)
+ * @copyright (c) 2026 Salvo Cortesiano <https://netshadows.de>
+ * @license GNU General Public License, version 2 (GPL-2.0)
+ */
+
+.tzc-ed-picker {
+	max-width: 900px;
+}
+
+.tzc-ed-search {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.tzc-ed-input {
+	flex: 1 1 auto;
+	width: 100%;
+	max-width: 520px;
+	padding: 6px 8px !important;
+	font-size: 1.1em !important;
+}
+
+.tzc-ed-results {
+	position: absolute;
+	z-index: 50;
+	top: 100%;
+	left: 22px;
+	width: min(620px, calc(100% - 22px));
+	max-height: 360px;
+	margin: 3px 0 0;
+	padding: 4px;
+	overflow-y: auto;
+	list-style: none;
+	border: 1px solid #c9d4e2;
+	border-radius: 8px;
+	background: #fff;
+	color: #1f2937;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+}
+
+.tzc-ed-results[hidden] {
+	display: none;
+}
+
+.tzc-ed-result {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.tzc-ed-result.tzc-ed-active,
+.tzc-ed-result:hover {
+	background: #eaf2fb;
+}
+
+.tzc-ed-rtext {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tzc-ed-rcountry {
+	color: #4b5563;
+}
+
+.tzc-ed-rmeta {
+	display: block;
+	color: #6b7280;
+	font-size: 0.9em;
+}
+
+.tzc-ed-rtype {
+	flex: 0 0 auto;
+	padding: 0 6px;
+	border-radius: 999px;
+	font-size: 0.8em;
+	font-weight: bold;
+	background: #e5e7eb;
+}
+
+.tzc-ed-rtype-city {
+	background: #dcfce7;
+	color: #166534;
+}
+
+.tzc-ed-rtype-zone {
+	background: #dbeafe;
+	color: #1e40af;
+}
+
+.tzc-ed-msg {
+	padding: 8px;
+	color: #6b7280;
+}
+
+.tzc-ed-error {
+	color: #b91c1c;
+}
+
+.tzc-ed-flag {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 14px;
+	border-radius: 2px;
+	object-fit: cover;
+	box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.tzc-ed-head {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+	margin: 12px 0 6px;
+	color: #6b7280;
+}
+
+.tzc-ed-count {
+	font-weight: bold;
+	white-space: nowrap;
+}
+
+.tzc-ed-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	counter-reset: tzc;
+}
+
+.tzc-ed-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 5px;
+	padding: 6px 8px;
+	border: 1px solid #dbe3ee;
+	border-radius: 8px;
+	background: #fff;
+	color: #1f2937;
+	transition: box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.tzc-ed-row::before {
+	counter-increment: tzc;
+	content: counter(tzc);
+	min-width: 18px;
+	color: #9ca3af;
+	font-weight: bold;
+	text-align: right;
+}
+
+.tzc-ed-row:hover {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tzc-ed-dragging {
+	opacity: 0.45;
+}
+
+.tzc-ed-over {
+	box-shadow: inset 0 3px 0 #105289;
+}
+
+.tzc-ed-flash {
+	animation: tzc-flash 1.2s ease;
+}
+
+@keyframes tzc-flash {
+	0% { background: #fef9c3; }
+	100% { background: #fff; }
+}
+
+.tzc-ed-handle {
+	cursor: grab;
+	color: #9ca3af;
+	font-size: 18px;
+	line-height: 1;
+	user-select: none;
+}
+
+.tzc-ed-name {
+	flex: 0 1 200px;
+	min-width: 120px;
+	font-weight: bold;
+}
+
+.tzc-ed-zone {
+	flex: 1 1 200px;
+	color: #6b7280;
+	font-size: 0.92em;
+}
+
+.tzc-ed-mobile {
+	white-space: nowrap;
+	font-size: 0.92em;
+}
+
+.tzc-ed-btn {
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border: 1px solid #c9d4e2;
+	border-radius: 6px;
+	background: #f4f7fb;
+	color: #374151;
+	font-size: 11px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.tzc-ed-btn:hover:not(:disabled) {
+	background: #105289;
+	border-color: #105289;
+	color: #fff;
+}
+
+.tzc-ed-btn:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.tzc-ed-del:hover:not(:disabled) {
+	background: #b91c1c;
+	border-color: #b91c1c;
+}
+
+.tzc-ed-emptymsg {
+	display: none;
+	padding: 14px;
+	border: 1px dashed #c9d4e2;
+	border-radius: 8px;
+	text-align: center;
+	color: #6b7280;
+}
+
+.tzc-ed-empty .tzc-ed-emptymsg {
+	display: block;
+}
+
+.tzc-ed-hidden .tzc-root {
+	opacity: 0.35;
+	filter: grayscale(1);
+}
+
+@media (max-width: 700px) {
+	.tzc-ed-name {
+		flex: 1 1 100%;
+	}
+
+	.tzc-ed-results {
+		left: 0;
+		width: 100%;
+	}
+}
+
+.tzc-ed-addbtn {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+.tzc-ed-steps {
+	margin: 6px 0 0;
+	color: #4b5563;
+}
+
+/* confirm/alert fallback (same look as the phpBB boxes) */
+.tzc-modal-wrap {
+	position: fixed;
+	inset: 0;
+	z-index: 10000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.45);
+}
+
+.tzc-modal {
+	width: min(440px, 92vw);
+	padding: 16px 18px;
+	border: 1px solid #999;
+	border-radius: 7px;
+	background: #fff;
+	color: #333;
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+	font-size: 1.1em;
+}
+
+.tzc-modal h3 {
+	margin: 0 0 8px;
+	padding-bottom: 6px;
+	border-bottom: 1px solid #ccc;
+	font-size: 1.15em;
+}
+
+.tzc-modal-buttons {
+	display: flex;
+	justify-content: center;
+	gap: 8px;
+	margin-top: 14px;
+}
