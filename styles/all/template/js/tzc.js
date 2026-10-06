@@ -233,6 +233,9 @@
 		if (this.raf) {
 			window.cancelAnimationFrame(this.raf);
 		}
+		if (this.resizeObserver) {
+			this.resizeObserver.disconnect();
+		}
 		this.destroyed = true;
 		this.root.innerHTML = '';
 		this.root.classList.remove('tzc-ready');
@@ -374,6 +377,7 @@
 				img.loading = 'lazy';
 				img.width = 18;
 				img.height = 12;
+				img.draggable = false;
 				img.onerror = function () {
 					this.style.display = 'none';
 				};
@@ -562,7 +566,42 @@
 	Bar.prototype.canPlay = function () {
 		return this.o.autoplay && !this.paused && !this.collapsed && !this.drag && !document.hidden && !this.finderOpen &&
 			!(this.holdUntil && Date.now() < this.holdUntil) &&
-			!(this.o.pause_hover && this.hover) && !this.focusIn && this.overflowing;
+			!(this.o.pause_hover && this.isHover()) && !this.keyboardFocus() && this.overflowing;
+	};
+
+	/**
+	 * Mouse really over the bar right now (not a stale mouseenter/mouseleave state)
+	 */
+	Bar.prototype.isHover = function () {
+		try {
+			return this.bar.matches(':hover');
+		} catch (e) {
+			return this.hover;
+		}
+	};
+
+	/**
+	 * Pause only for keyboard navigation inside the bar: a button clicked
+	 * with the mouse keeps the focus but must not stop the scrolling forever
+	 */
+	Bar.prototype.keyboardFocus = function () {
+		var a = document.activeElement;
+		// only the cards area (viewport, arrows, dots): the tool buttons never block the scrolling
+		var zones = [this.viewport, this.btnPrev, this.btnNext, this.dots];
+		var inside = false;
+		for (var i = 0; i < zones.length; i++) {
+			if (zones[i] && (zones[i] === a || zones[i].contains(a))) {
+				inside = true;
+			}
+		}
+		if (!a || !inside) {
+			return false;
+		}
+		try {
+			return a.matches(':focus-visible');
+		} catch (e) {
+			return false;
+		}
 	};
 
 	Bar.prototype.setPaused = function (paused) {
@@ -648,6 +687,25 @@
 
 		// fonts and flags change the widths: measure again once loaded
 		this.layout();
+		if (window.ResizeObserver) {
+			var pending = false;
+			this.resizeObserver = new window.ResizeObserver(function () {
+				if (pending) {
+					return;
+				}
+				pending = true;
+				window.requestAnimationFrame(function () {
+					pending = false;
+					self.layout();
+				});
+			});
+			this.resizeObserver.observe(vp);
+			this.resizeObserver.observe(this.track);
+		}
+		this.on(window, 'load', function () { self.layout(); });
+		if (document.fonts && document.fonts.ready) {
+			document.fonts.ready.then(function () { self.layout(); });
+		}
 		var t = setTimeout(function () { self.layout(); }, 600);
 		this.timers.push(t);
 	};
@@ -659,12 +717,28 @@
 		var vp = this.viewport, o = this.o;
 
 		if (o.mode === 'ticker') {
-			this.half = this.track.scrollWidth / 2;
-			this.overflowing = this.half > vp.clientWidth + 2;
+			// Length of one full round of cards, measured on the real cards (the copies
+			// used for the endless loop may still be hidden at this point)
+			var cards = [];
+			for (var i = 0; i < this.refs.length; i++) {
+				if (!this.refs[i].clone && this.refs[i].card.offsetParent !== null) {
+					cards.push(this.refs[i].card);
+				}
+			}
+			var styles = window.getComputedStyle(this.track);
+			var gap = parseFloat(styles.columnGap || styles.gap) || 0;
+			var setWidth = cards.length ? cards[cards.length - 1].offsetLeft + cards[cards.length - 1].offsetWidth - cards[0].offsetLeft : 0;
+
+			this.overflowing = cards.length > 0 && setWidth > vp.clientWidth + 2;
 			this.bar.classList.toggle('tzc-overflow', this.overflowing);
 			if (!this.overflowing) {
 				this.offset = 0;
+				this.half = 0;
 				this.track.style.transform = '';
+			} else {
+				// copies are visible now: the period is exact
+				this.half = this.measurePeriod() || (setWidth + gap);
+				this.applyTicker();
 			}
 		} else if (o.mode === 'carousel') {
 			this.overflowing = vp.scrollWidth > vp.clientWidth + 2;
@@ -752,6 +826,7 @@
 			if (e.pointerType !== 'mouse' || e.button !== 0) {
 				return;
 			}
+			e.preventDefault();
 			self.drag = { x: e.clientX, left: vp.scrollLeft };
 			moved = false;
 		});
@@ -784,7 +859,38 @@
 		}, true);
 	};
 
+	/**
+	 * Exact length of one round: distance between the first visible card and
+	 * its copy. Measured live, so it is right even if the page changed size.
+	 */
+	Bar.prototype.measurePeriod = function () {
+		var original = null, copy = null;
+		for (var i = 0; i < this.refs.length; i++) {
+			var r = this.refs[i];
+			if (!r.clone && !original && r.card.offsetParent !== null) {
+				original = r;
+			}
+		}
+		if (!original) {
+			return 0;
+		}
+		for (var j = 0; j < this.refs.length; j++) {
+			if (this.refs[j].clone && this.refs[j].city === original.city) {
+				copy = this.refs[j];
+				break;
+			}
+		}
+		if (!copy || copy.card.offsetParent === null) {
+			return 0;
+		}
+		return copy.card.offsetLeft - original.card.offsetLeft;
+	};
+
 	Bar.prototype.applyTicker = function () {
+		var period = this.measurePeriod();
+		if (period > 0) {
+			this.half = period;
+		}
 		if (!this.half) {
 			return;
 		}
@@ -804,6 +910,11 @@
 			if (!self.overflowing || (e.pointerType === 'mouse' && e.button !== 0)) {
 				return;
 			}
+			if (e.pointerType === 'mouse') {
+				// no text selection and no native drag of the flags
+				e.preventDefault();
+			}
+			self.layout();
 			self.drag = { x: e.clientX, start: self.offset };
 			self.bar.classList.add('tzc-dragging');
 		});
@@ -910,6 +1021,9 @@
 			return;
 		}
 		this.finderOpen = false;
+		if (document.activeElement && this.finder.contains(document.activeElement)) {
+			document.activeElement.blur();
+		}
 		this.finder.hidden = true;
 		this.btnSearch.setAttribute('aria-expanded', 'false');
 		this.bar.classList.remove('tzc-finder-open');
@@ -1081,17 +1195,21 @@
 		this.recent(city.z + '|' + city.n);
 		this.closeFinder(false);
 
-		var ref = null;
+		var ref = null, cards = [];
 		for (var i = 0; i < this.refs.length; i++) {
-			if (!this.refs[i].clone && this.refs[i].city === city) {
-				ref = this.refs[i];
-				break;
+			if (this.refs[i].city === city) {
+				// the ticker has two copies of every card: highlight both
+				cards.push(this.refs[i].card);
+				if (!ref && !this.refs[i].clone) {
+					ref = this.refs[i];
+				}
 			}
 		}
 		if (!ref) {
 			return;
 		}
 
+		this.layout();
 		var card = ref.card, vp = this.viewport;
 		this.holdUntil = Date.now() + 8000;
 		var centre = card.offsetLeft - (vp.clientWidth - card.offsetWidth) / 2;
@@ -1106,10 +1224,14 @@
 			card.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
 		}
 
-		card.classList.remove('tzc-flash');
-		void card.offsetWidth;
-		card.classList.add('tzc-flash');
-		var t = setTimeout(function () { card.classList.remove('tzc-flash'); }, 2600);
+		cards.forEach(function (c) {
+			c.classList.remove('tzc-flash');
+			void c.offsetWidth;
+			c.classList.add('tzc-flash');
+		});
+		var t = setTimeout(function () {
+			cards.forEach(function (c) { c.classList.remove('tzc-flash'); });
+		}, 2600);
 		this.timers.push(t);
 	};
 
@@ -1146,6 +1268,43 @@
 				}
 			}
 		}
+	};
+
+	TZC.version = '1.0.9';
+
+	/**
+	 * Diagnostics: type TZC.debug() in the browser console
+	 */
+	TZC.debug = function () {
+		var out = [];
+		var roots = document.querySelectorAll('.tzc-root');
+		for (var i = 0; i < roots.length; i++) {
+			var b = roots[i].tzcBar;
+			if (!b) {
+				out.push({ root: i, bar: 'not started' });
+				continue;
+			}
+			out.push({
+				version: TZC.version,
+				mode: b.o.mode,
+				cities: (b.data.cities || []).length,
+				overflowing: b.overflowing,
+				period: Math.round(b.half || 0),
+				periodMeasured: b.o.mode === 'ticker' ? Math.round(b.measurePeriod()) : null,
+				offset: Math.round(b.offset || 0),
+				scrollLeft: b.viewport.scrollLeft,
+				viewportWidth: b.viewport.clientWidth,
+				canPlay: b.canPlay(),
+				paused: b.paused,
+				hover: b.isHover(),
+				keyboardFocus: b.keyboardFocus(),
+				collapsed: b.collapsed
+			});
+		}
+		if (window.console && window.console.table) {
+			window.console.table(out);
+		}
+		return out;
 	};
 
 	TZC.entryAt = entryAt;
