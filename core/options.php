@@ -62,6 +62,8 @@ class options
 			'sort'				=> ['section' => 'display', 'type' => 'enum', 'values' => ['manual', 'east', 'west', 'name'], 'default' => 'manual', 'ucp' => true],
 			'search'			=> ['section' => 'display', 'type' => 'enum', 'values' => ['auto', 'always', 'never'], 'default' => 'auto', 'ucp' => true],
 			'search_min'		=> ['section' => 'display', 'type' => 'int', 'min' => 2, 'max' => 50, 'default' => 8],
+			'tooltip'			=> ['section' => 'display', 'type' => 'bool', 'default' => 1, 'ucp' => true],
+			'info'				=> ['section' => 'display', 'type' => 'bool', 'default' => 1, 'ucp' => true],
 
 			// --- Motion (user overridable) ---------------------------------
 			'autoplay'			=> ['section' => 'motion', 'type' => 'bool', 'default' => 1, 'ucp' => true],

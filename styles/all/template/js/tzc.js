@@ -212,6 +212,7 @@
 		this.tick(true);
 		this.schedule();
 		this.motion();
+		this.cardHelp();
 		root.classList.add('tzc-ready');
 	}
 
@@ -236,6 +237,14 @@
 		if (this.miniRaf) {
 			window.cancelAnimationFrame(this.miniRaf);
 		}
+		this.hideTip();
+		this.closeInfo(false);
+		clearInterval(this.helpTimer);
+		[this.tip, this.info, this.infoBackdrop].forEach(function (n) {
+			if (n && n.parentNode) {
+				n.parentNode.removeChild(n);
+			}
+		});
 		if (this.resizeObserver) {
 			this.resizeObserver.disconnect();
 		}
@@ -361,8 +370,14 @@
 		if (clone) {
 			card.setAttribute('aria-hidden', 'true');
 		} else {
-			card.setAttribute('role', 'group');
 			card.setAttribute('aria-label', city.n + (city.cn ? ', ' + city.cn : ''));
+			if (o.info) {
+				card.setAttribute('role', 'button');
+				card.setAttribute('tabindex', '0');
+				card.setAttribute('aria-haspopup', 'dialog');
+			} else {
+				card.setAttribute('role', 'group');
+			}
 		}
 
 		if (o.analog) {
@@ -578,7 +593,7 @@
 	 * ------------------------------------------------------------------ */
 
 	Bar.prototype.canPlay = function () {
-		return this.o.autoplay && !this.paused && !this.collapsed && !this.drag && !document.hidden && !this.finderOpen &&
+		return this.o.autoplay && !this.paused && !this.collapsed && !this.drag && !document.hidden && !this.finderOpen && !this.infoCity &&
 			!(this.holdUntil && Date.now() < this.holdUntil) &&
 			!(this.o.pause_hover && this.isHover()) && !this.keyboardFocus() && this.overflowing;
 	};
@@ -919,6 +934,9 @@
 			if (!self.drag) {
 				return;
 			}
+			if (moved) {
+				self.suppressClick = Date.now() + 350;
+			}
 			self.drag = null;
 			self.bar.classList.remove('tzc-dragging');
 		});
@@ -994,11 +1012,18 @@
 			if (!self.drag) {
 				return;
 			}
+			if (Math.abs(e.clientX - self.drag.x) > 5) {
+				self.dragMoved = true;
+			}
 			self.offset = self.drag.start + (e.clientX - self.drag.x);
 			self.applyTicker();
 		});
 		var end = function () {
 			if (self.drag) {
+				if (self.dragMoved) {
+					self.suppressClick = Date.now() + 350;
+				}
+				self.dragMoved = false;
 				self.drag = null;
 				self.bar.classList.remove('tzc-dragging');
 			}
@@ -1307,6 +1332,430 @@
 		this.timers.push(t);
 	};
 
+
+	/* ------------------------------------------------------------------
+	 * City tooltip (mouse) and information popup (click / tap)
+	 * ------------------------------------------------------------------ */
+
+	var hoverCapable = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+
+	function fmtHours(min) {
+		var a = Math.abs(min);
+		return Math.floor(a / 60) + (a % 60 ? ':' + pad(a % 60) : '') + ' h';
+	}
+
+	var longFormatters = {};
+	function formatLongDate(locale, shiftedMs) {
+		try {
+			if (!longFormatters[locale]) {
+				longFormatters[locale] = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+			}
+			return longFormatters[locale].format(new Date(shiftedMs));
+		} catch (e) {
+			var d = new Date(shiftedMs);
+			return d.getUTCDate() + '/' + (d.getUTCMonth() + 1) + '/' + d.getUTCFullYear();
+		}
+	}
+
+	var changeFormatters = {};
+	function formatChangeDate(locale, shiftedMs) {
+		try {
+			if (!changeFormatters[locale]) {
+				changeFormatters[locale] = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+			}
+			return changeFormatters[locale].format(new Date(shiftedMs));
+		} catch (e) {
+			return formatDate(locale, shiftedMs);
+		}
+	}
+
+	/**
+	 * Sunrise and sunset of the local day of a city (local times, null = none)
+	 */
+	function sunTimes(city, now, off) {
+		if (typeof city.lat !== 'number' || typeof city.lon !== 'number') {
+			return null;
+		}
+		var start = Math.floor((now + off * 60000) / 86400000) * 86400000 - off * 60000;
+		var step = 120000, h = -0.833;
+		var rise = null, set = null, prev = sunElevation(city.lat, city.lon, start) - h, above = prev > 0;
+		for (var t = start + step; t <= start + 86400000; t += step) {
+			var cur = sunElevation(city.lat, city.lon, t) - h;
+			if (prev <= 0 && cur > 0 && rise === null) {
+				rise = t - step + step * (-prev / (cur - prev));
+			}
+			if (prev > 0 && cur <= 0 && set === null) {
+				set = t - step + step * (prev / (prev - cur));
+			}
+			prev = cur;
+		}
+		return { rise: rise, set: set, polar: (rise === null && set === null) ? (above ? 'day' : 'night') : '' };
+	}
+
+	Bar.prototype.clock = function (ms, off, seconds) {
+		var d = new Date(ms + off * 60000), o = this.o, i18n = this.i18n;
+		var h = d.getUTCHours(), m = d.getUTCMinutes();
+		var out = o.format === '12' ? (h % 12 || 12) + ':' + pad(m) : pad(h) + ':' + pad(m);
+		if (seconds) {
+			out += ':' + pad(d.getUTCSeconds());
+		}
+		return out + (o.format === '12' ? (h < 12 ? i18n.am : i18n.pm) : '');
+	};
+
+	/**
+	 * Everything known about a city right now
+	 */
+	Bar.prototype.cityInfo = function (city) {
+		var now = Date.now(), i18n = this.i18n;
+		var e = entryAt(city.t, now), off = e[1];
+		var homeOff = entryAt(this.data.home, now)[1];
+		var homeDay = dayNumber(now + homeOff * 60000), day = dayNumber(now + off * 60000);
+		var diff = off - homeOff, abbr = /^[+\-]?\d/.test(e[2]) ? '' : e[2];
+		var info = {
+			now: now,
+			off: off,
+			abbr: abbr,
+			dst: !!e[3],
+			utc: fmtOffset(off) + (abbr ? ' (' + abbr + ')' : ''),
+			date: formatDate(this.locale, now + off * 60000),
+			longDate: formatLongDate(this.locale, now + off * 60000),
+			rel: day - homeDay === 1 ? i18n.tomorrow : (day - homeDay === -1 ? i18n.yesterday : ''),
+			diffText: city.home ? i18n.your_zone : (diff === 0 ? i18n.diff_same : (diff > 0 ? i18n.diff_ahead : i18n.diff_behind).replace('%s', fmtHours(diff))),
+			phase: phaseOf(city, now, new Date(now + off * 60000).getUTCHours()),
+			usesDst: false,
+			next: null
+		};
+		for (var i = 0; i < city.t.length; i++) {
+			if (city.t[i][3]) {
+				info.usesDst = true;
+			}
+			if (!info.next && city.t[i][0] !== null && now < city.t[i][0] && city.t[i + 1]) {
+				info.next = { at: city.t[i][0], before: city.t[i][1], after: city.t[i + 1][1], toDst: !!city.t[i + 1][3], fromDst: !!city.t[i][3] };
+			}
+		}
+		return info;
+	};
+
+	Bar.prototype.refOf = function (node) {
+		var card = node && node.closest ? node.closest('.tzc-card') : null;
+		if (!card || !this.viewport.contains(card)) {
+			return null;
+		}
+		for (var i = 0; i < this.refs.length; i++) {
+			if (this.refs[i].card === card) {
+				return this.refs[i];
+			}
+		}
+		return null;
+	};
+
+	Bar.prototype.cardHelp = function () {
+		var self = this, vp = this.viewport, o = this.o;
+		if (!o.tooltip && !o.info) {
+			return;
+		}
+		this.bar.classList.toggle('tzc-has-info', !!o.info);
+
+		if (o.tooltip && hoverCapable) {
+			this.on(vp, 'pointerover', function (e) {
+				if (e.pointerType !== 'mouse' || self.drag || self.infoCity) {
+					return;
+				}
+				var ref = self.refOf(e.target);
+				if (ref && ref !== self.tipRef) {
+					self.showTip(ref);
+				}
+			});
+			this.on(vp, 'pointerleave', function () { self.hideTip(); });
+			this.on(vp, 'pointerdown', function () { self.hideTip(); });
+		}
+
+		if (o.info) {
+			this.on(vp, 'click', function (e) {
+				if (self.suppressClick && Date.now() < self.suppressClick) {
+					return;
+				}
+				var ref = self.refOf(e.target);
+				if (ref) {
+					self.hideTip();
+					self.openInfo(ref, false);
+				}
+			});
+			this.on(vp, 'keydown', function (e) {
+				if (e.key !== 'Enter' && e.key !== ' ') {
+					return;
+				}
+				var ref = self.refOf(e.target);
+				if (ref && e.target === ref.card) {
+					e.preventDefault();
+					self.openInfo(ref, true);
+				}
+			});
+			this.on(document, 'pointerdown', function (e) {
+				if (self.infoCity && self.info && !self.info.contains(e.target) && !self.refOf(e.target)) {
+					self.closeInfo(false);
+				}
+			});
+			this.on(document, 'keydown', function (e) {
+				if (e.key === 'Escape' && self.infoCity) {
+					self.closeInfo(true);
+				}
+			});
+		}
+
+		this.on(window, 'resize', function () {
+			self.hideTip();
+			self.placeInfo();
+		});
+		this.on(window, 'scroll', function () {
+			self.hideTip();
+			self.placeInfo();
+		}, { passive: true });
+	};
+
+	/**
+	 * Fixed box next to a card: above if there is room, otherwise below,
+	 * always inside the window
+	 */
+	Bar.prototype.place = function (box, card, gap) {
+		var r = card.getBoundingClientRect();
+		var w = box.offsetWidth, h = box.offsetHeight;
+		var vw = document.documentElement.clientWidth, vh = window.innerHeight;
+		var below = r.top - h - gap < 8 && r.bottom + h + gap <= vh - 8;
+		var top = below ? r.bottom + gap : r.top - h - gap;
+		var left = Math.max(8, Math.min(vw - w - 8, r.left + r.width / 2 - w / 2));
+		box.style.top = Math.max(8, top) + 'px';
+		box.style.left = left + 'px';
+		box.style.setProperty('--tzc-arrow', Math.max(14, Math.min(w - 14, r.left + r.width / 2 - left)) + 'px');
+		box.classList.toggle('tzc-below', below);
+	};
+
+	Bar.prototype.showTip = function (ref) {
+		var self = this, city = ref.city, i18n = this.i18n;
+		if (!this.tip) {
+			this.tip = el('div', 'tzc-tip');
+			this.tip.setAttribute('role', 'tooltip');
+			document.body.appendChild(this.tip);
+		}
+		this.tipRef = ref;
+		var fill = function () {
+			if (!self.tipRef) {
+				return;
+			}
+			var info = self.cityInfo(city), tip = self.tip;
+			tip.innerHTML = '';
+			tip.appendChild(el('div', 'tzc-tip-title', city.n + (city.cn ? ' — ' + city.cn : '')));
+			tip.appendChild(el('div', '', self.clock(info.now, info.off, false) + '  ·  ' + info.date + (info.rel ? ' (' + info.rel + ')' : '')));
+			tip.appendChild(el('div', '', info.utc + (info.dst ? '  ·  ' + i18n.dst : '')));
+			tip.appendChild(el('div', '', info.diffText));
+			if (self.o.info) {
+				tip.appendChild(el('div', 'tzc-tip-more', i18n.tip_more));
+			}
+			self.place(tip, ref.card, 10);
+		};
+		clearTimeout(this.tipDelay);
+		this.tipDelay = setTimeout(function () {
+			if (self.tipRef !== ref) {
+				return;
+			}
+			fill();
+			self.tip.classList.add('tzc-show');
+			clearInterval(self.helpTimer);
+			self.helpTimer = setInterval(function () {
+				if (self.tipRef) {
+					fill();
+				} else if (self.infoCity) {
+					self.fillInfo();
+				}
+			}, 1000);
+		}, 250);
+	};
+
+	Bar.prototype.hideTip = function () {
+		clearTimeout(this.tipDelay);
+		this.tipRef = null;
+		if (this.tip) {
+			this.tip.classList.remove('tzc-show');
+		}
+		if (!this.infoCity) {
+			clearInterval(this.helpTimer);
+		}
+	};
+
+	Bar.prototype.openInfo = function (ref, byKeyboard) {
+		this.infoByKey = !!byKeyboard;
+		var self = this, i18n = this.i18n;
+		if (this.infoCity === ref.city) {
+			this.closeInfo(false);
+			return;
+		}
+		if (!this.info) {
+			this.infoBackdrop = el('div', 'tzc-info-backdrop');
+			this.on(this.infoBackdrop, 'click', function () { self.closeInfo(false); });
+			this.info = el('div', 'tzc-info tzc-info-' + (this.o.theme === 'dark' ? 'dark' : 'light'));
+			this.info.setAttribute('role', 'dialog');
+			this.info.style.setProperty('--tzc-accent', this.o.accent);
+			document.body.appendChild(this.infoBackdrop);
+			document.body.appendChild(this.info);
+		}
+		this.infoCity = ref.city;
+		this.infoRef = ref;
+		this.info.setAttribute('aria-label', ref.city.n);
+		this.fillInfo();
+		this.info.classList.add('tzc-show');
+		this.infoBackdrop.classList.add('tzc-show');
+		this.placeInfo();
+		clearInterval(this.helpTimer);
+		this.helpTimer = setInterval(function () { self.fillInfo(); }, 1000);
+		if (byKeyboard) {
+			// after the fade-in: a box that is still appearing cannot take the focus
+			var box = this.info;
+			clearTimeout(this.focusTimer);
+			this.focusTimer = setTimeout(function () {
+				var close = box.querySelector('.tzc-info-close');
+				if (close && self.infoCity) {
+					close.focus({ preventScroll: true });
+				}
+			}, 200);
+		}
+	};
+
+	Bar.prototype.closeInfo = function (focusCard) {
+		if (!this.infoCity) {
+			return;
+		}
+		var ref = this.infoRef;
+		this.infoCity = null;
+		this.infoRef = null;
+		clearInterval(this.helpTimer);
+		clearTimeout(this.focusTimer);
+		this.info.classList.remove('tzc-show');
+		this.infoBackdrop.classList.remove('tzc-show');
+		// the focus goes back to the card only for keyboard users,
+		// otherwise it would keep the bar paused
+		if (focusCard && this.infoByKey && ref && !ref.clone) {
+			ref.card.focus({ preventScroll: true });
+		} else if (this.info.contains(document.activeElement)) {
+			document.activeElement.blur();
+		}
+	};
+
+	Bar.prototype.placeInfo = function () {
+		if (!this.infoCity || !this.info) {
+			return;
+		}
+		if (window.matchMedia && window.matchMedia('(max-width: 700px)').matches) {
+			// bottom sheet on small screens
+			this.info.style.top = '';
+			this.info.style.left = '';
+			this.info.classList.remove('tzc-below');
+			return;
+		}
+		this.place(this.info, this.infoRef.card, 12);
+	};
+
+	/**
+	 * Rows of the information popup: [label, value]
+	 */
+	Bar.prototype.infoRows = function (city, info) {
+		var i18n = this.i18n;
+		var rows = [
+			[i18n.info_diff, info.diffText],
+			[i18n.info_offset, info.utc],
+			[i18n.info_zone, city.z],
+			[i18n.dst, info.dst ? i18n.dst_on : (info.usesDst || info.next ? i18n.dst_off : i18n.dst_none)]
+		];
+
+		var next = i18n.next_none;
+		if (info.next) {
+			var when = formatChangeDate(this.locale, info.next.at + info.next.before * 60000) + ', ' + this.clock(info.next.at, info.next.before, false);
+			next = i18n.next_fmt.replace('%1$s', when).replace('%2$s', fmtOffset(info.next.after));
+			if (info.next.toDst) {
+				next += ' · ' + i18n.next_dst_start;
+			} else if (info.next.fromDst) {
+				next += ' · ' + i18n.next_dst_end;
+			}
+		}
+		rows.push([i18n.info_next, next]);
+		rows.push([i18n.info_phase, i18n[info.phase] || '']);
+
+		var sun = sunTimes(city, info.now, info.off);
+		if (sun) {
+			var sunText;
+			if (sun.polar) {
+				sunText = sun.polar === 'day' ? i18n.sun_polar_day : i18n.sun_polar_night;
+			} else {
+				sunText = i18n.sun_fmt
+					.replace('%1$s', sun.rise !== null ? this.clock(sun.rise, info.off, false) : '–')
+					.replace('%2$s', sun.set !== null ? this.clock(sun.set, info.off, false) : '–');
+			}
+			rows.push([i18n.info_sun, sunText]);
+		}
+		return rows;
+	};
+
+	/**
+	 * Build the popup once per city, then only refresh its texts
+	 * (rebuilding every second would steal the keyboard focus)
+	 */
+	Bar.prototype.fillInfo = function () {
+		if (!this.infoCity) {
+			return;
+		}
+		var self = this, city = this.infoCity, i18n = this.i18n;
+		var info = this.cityInfo(city), box = this.info;
+		var rows = this.infoRows(city, info);
+		var dateText = info.longDate + (info.rel ? ' · ' + info.rel : '');
+
+		if (this.infoBuilt === city && this.infoNodes && this.infoNodes.values.length === rows.length) {
+			setText(this.infoNodes.time, this.clock(info.now, info.off, true));
+			setText(this.infoNodes.date, dateText);
+			for (var i = 0; i < rows.length; i++) {
+				setText(this.infoNodes.values[i], rows[i][1]);
+			}
+			return;
+		}
+
+		box.innerHTML = '';
+		var head = el('div', 'tzc-info-head');
+		if (city.cc) {
+			var img = el('img', 'tzc-flag');
+			img.src = this.data.flags + city.cc + '.svg';
+			img.alt = '';
+			img.width = 22;
+			img.height = 15;
+			head.appendChild(img);
+		}
+		var names = el('div', 'tzc-info-names');
+		names.appendChild(el('div', 'tzc-info-city', city.n));
+		if (city.cn) {
+			names.appendChild(el('div', 'tzc-info-country', city.cn));
+		}
+		head.appendChild(names);
+		var close = button('tzc-info-close', 'close', i18n.close);
+		close.addEventListener('click', function () { self.closeInfo(true); });
+		head.appendChild(close);
+		box.appendChild(head);
+
+		var nodes = { time: el('div', 'tzc-info-time', this.clock(info.now, info.off, true)), date: el('div', 'tzc-info-date', dateText), values: [] };
+		box.appendChild(nodes.time);
+		box.appendChild(nodes.date);
+		var list = el('div', 'tzc-info-rows');
+		rows.forEach(function (r) {
+			var row = el('div', 'tzc-info-row');
+			row.appendChild(el('span', 'tzc-info-label', r[0]));
+			var value = el('span', 'tzc-info-value', r[1]);
+			row.appendChild(value);
+			nodes.values.push(value);
+			list.appendChild(row);
+		});
+		box.appendChild(list);
+		box.appendChild(el('div', 'tzc-info-foot', i18n.info_note));
+
+		this.infoNodes = nodes;
+		this.infoBuilt = city;
+	};
+
 	/* ------------------------------------------------------------------
 	 * Public API
 	 * ------------------------------------------------------------------ */
@@ -1342,7 +1791,7 @@
 		}
 	};
 
-	TZC.version = '1.0.10';
+	TZC.version = '1.0.11';
 
 	/**
 	 * Diagnostics: type TZC.debug() in the browser console
