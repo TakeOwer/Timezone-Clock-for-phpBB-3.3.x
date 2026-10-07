@@ -2,11 +2,6 @@
 
 World clock bar for phpBB 3.3.x. It shows the time of the cities you choose in a **carousel**, a continuously scrolling **ticker** or a **grid**. Time zones always stay correct thanks to automatic updates from the official **IANA** time zone database.
 
-![Version](https://img.shields.io/badge/version-1.0.11-105080)
-![phpBB](https://img.shields.io/badge/phpBB-3.3.x-377a33)
-![PHP](https://img.shields.io/badge/PHP-%3E%3D7.4-377a33)
-![License](https://img.shields.io/badge/license-GPL--2.0--only-7f7f7f)
-
 - **Package:** `salvocortesiano/timezoneclock`
 - **Version:** 1.0.11
 - **Author:** Salvo Cortesiano — <https://netshadows.de> — support@netshadows.de
@@ -111,7 +106,7 @@ At the top you find the **live preview**: it updates while you change the option
 | Position | Right below the header, at the top of the content, at the bottom of the content, or above the footer. |
 | Show to guests / Show to bots | Visibility for unregistered visitors and search engines. |
 | Show on small screens | On smartphones the bar can be swiped. |
-| Collapsible bar | Button that reduces the bar to one line showing the first cities. The browser remembers the choice. |
+| Collapsible bar | Button that reduces the bar to one line. The browser remembers the choice. When **automatic scrolling** is enabled, the collapsed line shows **all** the cities and scrolls continuously like a ticker: it stops while the mouse is over it, starts again when the mouse leaves, and the pause button stays available. With automatic scrolling disabled it shows the first 5 cities, still. Clicking the line expands the bar again. |
 
 ### Card content (customisable by users)
 
@@ -134,6 +129,8 @@ At the top you find the **live preview**: it updates while you change the option
 | City order | As configured, east to west, west to east, or alphabetical. |
 | City search in the bar | *Only when there are many cities* (default), *Always* or *Never*. Adds the magnifier button. |
 | Minimum cities to show the search | With "Only when there are many cities", the magnifier appears from this number of cities upwards (default: 8). ACP only. |
+| Tooltip on mouse over | Dark box with city and country, time and date, UTC offset with abbreviation, DST and difference from your time (for example "1 h ahead of your time"). Desktop only. |
+| Information popup on click | Click (or tap) a city: time with seconds, full date, difference from your time, UTC offset, IANA zone, DST, next clock change, time of day, sunrise and sunset. On smartphones it opens from the bottom. |
 
 ### Scrolling (customisable by users)
 
@@ -344,6 +341,15 @@ Replace `php` with the full path of your PHP binary if needed. The command shows
 - **Ticker:** smooth continuous scrolling that slows down when you hover it. It can be dragged.
 - **Grid:** all cities visible, on several rows if needed.
 - **Buttons on the right:** 🔍 find a city, pause/start scrolling, ⚙ customise (registered users) and collapse/expand.
+- **Tooltip on mouse over** (desktop): after a moment a dark box appears above the card, or below it when there is no room, always inside the screen. It shows city and country, time and date, UTC offset with abbreviation (e.g. "UTC+3 (MSK)"), DST and the **difference from your time** spelled out ("1 h ahead of your time", "This is your time zone"). It updates every second.
+- **Information popup** when clicking or tapping a city:
+  - time with seconds and full date;
+  - difference from your time, UTC offset with abbreviation, IANA zone;
+  - DST: *In effect*, *Not in effect* or *Not used in this country*;
+  - **next clock change** with local date and time and the new offset (e.g. "Sun 25 Oct 2026, 03:00 → UTC+1 · DST ends");
+  - time of day and **sunrise and sunset**, computed from the city coordinates (including "The sun does not set / rise today" in polar areas).
+
+  On desktops it opens next to the card; on smartphones it slides up full width over a dimmed background. It closes with the X, Esc, a click outside or a second click on the same city. Scrolling pauses while it is open and resumes when it closes. Dragging the bar never opens it by mistake. Keyboard: Tab to the city, Enter to open, Esc to close.
 - **City search 🔍**, a picker box like the ones used in modern forum interfaces:
   - at the top the **Search a city or a country…** box;
   - **Recently searched**: the last 4 cities chosen, remembered by the browser;
@@ -431,6 +437,16 @@ salvocortesiano/timezoneclock/
 ---
 
 ## 15. Changelog
+
+### 1.0.11
+- **Tooltip on mouse over** on every city: city, time, date, UTC offset, DST and the **difference from your time spelled out**, so that "+1 h" is not mistaken for the city's offset. Always inside the screen, desktop only.
+- **Information popup on click or tap**: time with seconds, full date, zone, DST, next clock change, sunrise and sunset. Bottom sheet on smartphones. Keyboard accessible.
+- New options "Tooltip on mouse over" and "Information popup on click", on by default and also customisable by users. A migration adds them to existing installations.
+
+### 1.0.10
+- **Scrolling collapsed bar.** With automatic scrolling enabled in the ACP, the collapsed line shows every city and scrolls continuously, with no gap between the end and the start. It stops immediately when the mouse is over it and starts again smoothly when the mouse leaves. The pause button stays visible in the collapsed bar, in every mode (carousel, ticker and grid). It respects the operating system's "reduce motion" setting.
+- With automatic scrolling disabled, the collapsed line stays still and shows the first 5 cities, as before.
+- `TZC.debug()` also shows the state of the collapsed line.
 
 ### 1.0.9
 - **Ticker independent of when it is measured.** Version 1.0.8 measured the round length only once: if the page was hidden or incomplete at that moment (theme preloader, CSS or panels loaded late, width changing), the value stayed wrong and the bar jumped, made Rome disappear while dragging, or did not show the searched city. Now:

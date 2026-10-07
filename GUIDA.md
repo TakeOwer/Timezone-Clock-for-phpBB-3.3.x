@@ -1,4 +1,4 @@
-# Timezone Clock 1.0.9 — Guida completa
+# Timezone Clock 1.0.11 — Guida completa
 
 Barra degli orologi dal mondo per phpBB 3.3.x. Mostra l'ora delle città che scegli in un **carosello**, in un **ticker** a scorrimento continuo o in una **griglia**. I fusi orari restano sempre corretti grazie all'aggiornamento automatico dal database ufficiale **IANA**.
 
@@ -104,7 +104,7 @@ In cima trovi l'**anteprima live**: si aggiorna mentre cambi le opzioni, prima a
 | Posizione | Sotto l'intestazione, in cima al contenuto, in fondo al contenuto o sopra il piè di pagina. |
 | Mostra agli ospiti / ai bot | Visibilità per i visitatori non registrati e per i motori di ricerca. |
 | Mostra sugli schermi piccoli | Su smartphone la barra si scorre col dito. |
-| Barra comprimibile | Pulsante per ridurla a una riga, che mostra le prime città. Il browser ricorda la scelta. |
+| Barra comprimibile | Pulsante per ridurla a una riga. Il browser ricorda la scelta. Se lo **scorrimento automatico** è attivo, la riga ridotta mostra **tutte** le città e scorre in continuo come un ticker: si ferma quando ci passi sopra con il mouse, riparte quando lo togli, e il pulsante pausa resta disponibile. Con lo scorrimento disattivato mostra le prime 5 città, ferma. Un clic sulla riga riapre la barra. |
 
 ### Contenuto delle schede (personalizzabile dagli utenti)
 
@@ -127,6 +127,8 @@ In cima trovi l'**anteprima live**: si aggiorna mentre cambi le opzioni, prima a
 | Ordine | Come impostato, da est a ovest, da ovest a est, oppure alfabetico. |
 | Ricerca delle città nella barra | *Solo quando le città sono molte* (predefinito), *Sempre* oppure *Mai*. Aggiunge il pulsante con la lente. |
 | Città minime per mostrare la ricerca | Con "Solo quando le città sono molte", la lente compare da questo numero di città in su (predefinito: 8). Solo ACP. |
+| Suggerimento al passaggio del mouse | Riquadro scuro con città e paese, ora e data, scostamento da UTC con sigla, ora legale e differenza rispetto alla tua ora (per esempio "1 h avanti rispetto alla tua ora"). Solo su computer. |
+| Scheda informativa al clic | Clic (o tocco) su una città: ora con i secondi, data completa, differenza con la tua ora, scostamento da UTC, fuso IANA, ora legale, prossimo cambio d'ora, momento della giornata, alba e tramonto. Su smartphone si apre dal basso. |
 
 ### Scorrimento (personalizzabile dagli utenti)
 
@@ -331,6 +333,15 @@ Il comando mostra una barra di avanzamento con percentuale e, alla fine, il reso
 - **Ticker:** scorrimento continuo e fluido che rallenta quando passi col mouse. Si può trascinare.
 - **Griglia:** tutte le città visibili, in più righe se serve.
 - **Pulsanti a destra:** 🔍 cerca una città, pausa/avvio dello scorrimento, ⚙ personalizza (utenti registrati) e comprimi/espandi.
+- **Suggerimento al passaggio del mouse** (computer): dopo un attimo compare un riquadro scuro sopra la scheda, o sotto se sopra non c'è spazio, sempre dentro lo schermo. Mostra città e paese, ora e data, scostamento da UTC con la sigla (es. "UTC+3 (MSK)"), l'eventuale ora legale e la **differenza rispetto alla tua ora** scritta per esteso ("1 h avanti rispetto alla tua ora", "È il tuo fuso orario"). Si aggiorna ogni secondo.
+- **Scheda informativa** al clic o al tocco su una città:
+  - ora con i secondi e data completa ("Mercoledì 7 ottobre 2026");
+  - differenza rispetto alla tua ora, scostamento da UTC con sigla, fuso IANA;
+  - ora legale: *In corso*, *Non in corso* oppure *Non usata in questo paese*;
+  - **prossimo cambio d'ora** con data e ora locali e nuovo scostamento (es. "dom 25 ott 2026, 03:00 → UTC+1 · finisce l'ora legale");
+  - momento della giornata e **alba e tramonto** del giorno, calcolati sulle coordinate della città (anche "Il sole oggi non tramonta / non sorge" nelle zone polari).
+
+  Su computer si apre accanto alla scheda; su smartphone sale dal basso a tutta larghezza, con lo sfondo scurito. Si chiude con la X, con Esc, con un clic fuori o con un nuovo clic sulla stessa città. Mentre è aperta lo scorrimento si ferma e riparte alla chiusura. Un trascinamento della barra non la apre per errore. Da tastiera: Tab fino alla città, Invio per aprire, Esc per chiudere.
 - **Ricerca delle città 🔍**, nello stesso stile del riquadro "Dove vuoi aprire l'argomento?" di New Topic:
   - in cima la casella **Cerca una città o un paese…**;
   - **Cercate di recente**: le ultime 4 città scelte, ricordate dal browser;
@@ -419,6 +430,16 @@ salvocortesiano/timezoneclock/
 ---
 
 ## 15. Novità delle versioni
+
+### 1.0.11
+- **Suggerimento al passaggio del mouse** su ogni città, nello stile dei tooltip del forum: città, ora, data, scostamento da UTC, ora legale e **differenza rispetto alla tua ora scritta per esteso**, così è chiaro che "+1 h" non è il fuso della città. Sempre dentro lo schermo, solo su computer.
+- **Scheda informativa al clic o al tocco**: ora con i secondi, data completa, fuso, ora legale, prossimo cambio d'ora, alba e tramonto. Pannello dal basso su smartphone. Accessibile da tastiera.
+- Nuove opzioni "Suggerimento al passaggio del mouse" e "Scheda informativa al clic", attive di default e personalizzabili anche dall'utente. Una migration le aggiunge alle installazioni esistenti.
+
+### 1.0.10
+- **Barra ridotta che scorre.** Con lo scorrimento automatico attivo in ACP, la riga della barra ridotta mostra tutte le città e scorre in continuo, senza vuoti tra la fine e l'inizio. Si ferma subito al passaggio del mouse e riparte dolcemente quando il mouse esce. Il pulsante pausa resta visibile anche con la barra ridotta, in tutte le modalità (carosello, ticker e griglia). Rispetta "riduci movimento" del sistema operativo.
+- Se lo scorrimento automatico è disattivato, la riga ridotta resta ferma e mostra le prime 5 città, come prima.
+- `TZC.debug()` mostra anche lo stato della riga ridotta.
 
 ### 1.0.9
 - **Ticker indipendente dal momento in cui viene misurato.** La 1.0.8 calcolava la lunghezza del giro una sola volta: se in quel momento la pagina era nascosta o incompleta (preloader del tema, CSS o pannelli caricati in ritardo, larghezza che cambia), la misura restava sbagliata e la barra saltava, faceva sparire Roma durante il trascinamento o non mostrava la città cercata. Adesso:
