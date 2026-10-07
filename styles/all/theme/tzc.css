@@ -563,10 +563,36 @@
 }
 
 .tzc-mini-text {
+	flex: 1 1 auto;
+	min-width: 0;
 	white-space: nowrap;
 	overflow: hidden;
-	text-overflow: ellipsis;
 	font-variant-numeric: tabular-nums;
+}
+
+.tzc-mini-track {
+	display: inline-flex;
+	will-change: transform;
+}
+
+.tzc-mini-seq {
+	flex: 0 0 auto;
+	white-space: pre;
+	padding-right: 3em;
+}
+
+/* the copy is used only while the line scrolls */
+.tzc-mini-copy {
+	display: none;
+}
+
+.tzc-mini-scroll .tzc-mini-copy {
+	display: inline;
+}
+
+.tzc-mini-scroll .tzc-mini-text {
+	-webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+	mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
 }
 
 .tzc-collapsed .tzc-mini {
@@ -575,9 +601,13 @@
 
 .tzc-collapsed .tzc-viewport,
 .tzc-collapsed .tzc-nav,
-.tzc-collapsed .tzc-dots,
-.tzc-collapsed .tzc-pause {
+.tzc-collapsed .tzc-dots {
 	display: none !important;
+}
+
+/* in grid mode the pause button is only useful in the collapsed line */
+.tzc-mode-grid:not(.tzc-collapsed) .tzc-pause {
+	display: none;
 }
 
 .tzc-collapsed .tzc-tools {

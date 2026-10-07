@@ -233,6 +233,9 @@
 		if (this.raf) {
 			window.cancelAnimationFrame(this.raf);
 		}
+		if (this.miniRaf) {
+			window.cancelAnimationFrame(this.miniRaf);
+		}
 		if (this.resizeObserver) {
 			this.resizeObserver.disconnect();
 		}
@@ -264,7 +267,7 @@
 			});
 			tools.appendChild(this.btnSearch);
 		}
-		if (o.mode !== 'grid' && o.autoplay) {
+		if (o.autoplay) {
 			this.btnPause = button('tzc-pause', this.paused ? 'play' : 'pause', this.paused ? i18n.play : i18n.pause);
 			this.btnPause.setAttribute('aria-pressed', this.paused ? 'true' : 'false');
 			this.on(this.btnPause, 'click', function () {
@@ -294,6 +297,15 @@
 		var miniIcon = el('span', 'tzc-mini-icon');
 		miniIcon.innerHTML = ICONS.globe;
 		this.miniText = el('span', 'tzc-mini-text');
+		this.miniTrack = el('span', 'tzc-mini-track');
+		this.miniSeq = el('span', 'tzc-mini-seq');
+		this.miniCopy = el('span', 'tzc-mini-seq tzc-mini-copy');
+		this.miniCopy.setAttribute('aria-hidden', 'true');
+		this.miniTrack.appendChild(this.miniSeq);
+		this.miniTrack.appendChild(this.miniCopy);
+		this.miniText.appendChild(this.miniTrack);
+		this.miniOffset = 0;
+		this.miniSpeed = 0;
 		this.mini.appendChild(miniIcon);
 		this.mini.appendChild(this.miniText);
 		this.on(this.mini, 'click', function () {
@@ -489,7 +501,7 @@
 				}
 			}
 
-			if (!r.clone && mini.length < 5) {
+			if (!r.clone && (o.autoplay || mini.length < 5)) {
 				mini.push(r.city.n + ' ' + hm + (o.format === '12' ? (h < 12 ? i18n.am : i18n.pm) : ''));
 			}
 
@@ -537,7 +549,9 @@
 			}
 		}
 
-		setText(this.miniText, mini.join('  \u00b7  '));
+		var miniLine = mini.join('  \u00b7  ');
+		setText(this.miniSeq, miniLine);
+		setText(this.miniCopy, miniLine);
 		if (this.finderOpen && fullUpdate) {
 			this.finderTimes();
 		}
@@ -602,6 +616,50 @@
 		} catch (e) {
 			return false;
 		}
+	};
+
+	/**
+	 * Collapsed line: scrolls when automatic scrolling is enabled,
+	 * stops while the mouse is over it and starts again afterwards
+	 */
+	Bar.prototype.miniCanPlay = function () {
+		var hover = false;
+		try {
+			hover = this.mini.matches(':hover');
+		} catch (e) {
+			hover = false;
+		}
+		return this.o.autoplay && this.collapsed && !this.paused && !document.hidden && !this.finderOpen &&
+			!(this.o.pause_hover && hover) && !reduceMotion;
+	};
+
+	Bar.prototype.miniStep = function (dt) {
+		if (!this.collapsed || !this.o.autoplay) {
+			return;
+		}
+		// one round = width of the text plus its trailing space (the copy follows it)
+		var period = this.miniSeq.offsetWidth;
+		var overflow = period > 0 && this.miniText.clientWidth > 0 && period > this.miniText.clientWidth + 2;
+		this.mini.classList.toggle('tzc-mini-scroll', overflow);
+		if (!overflow) {
+			this.miniOffset = 0;
+			this.miniTrack.style.transform = '';
+			return;
+		}
+		var target = this.miniCanPlay() ? Math.max(20, Math.min(80, this.o.ticker_speed || 40)) : 0;
+		// quick stop (mouse over, pause), soft start
+		this.miniSpeed += (target - this.miniSpeed) * Math.min(1, dt * (target ? 3 : 18));
+		if (!target && this.miniSpeed < 0.5) {
+			this.miniSpeed = 0;
+		}
+		this.miniOffset -= this.miniSpeed * dt;
+		while (this.miniOffset <= -period) {
+			this.miniOffset += period;
+		}
+		while (this.miniOffset > 0) {
+			this.miniOffset -= period;
+		}
+		this.miniTrack.style.transform = 'translate3d(' + this.miniOffset.toFixed(2) + 'px,0,0)';
 	};
 
 	Bar.prototype.setPaused = function (paused) {
@@ -683,6 +741,20 @@
 				self.raf = window.requestAnimationFrame(loop);
 			};
 			this.raf = window.requestAnimationFrame(loop);
+		}
+
+		if (o.autoplay) {
+			var miniLast = 0;
+			var miniLoop = function (ts) {
+				if (self.destroyed) {
+					return;
+				}
+				var dt = miniLast ? Math.min(0.1, (ts - miniLast) / 1000) : 0;
+				miniLast = ts;
+				self.miniStep(dt);
+				self.miniRaf = window.requestAnimationFrame(miniLoop);
+			};
+			this.miniRaf = window.requestAnimationFrame(miniLoop);
 		}
 
 		// fonts and flags change the widths: measure again once loaded
@@ -1270,7 +1342,7 @@
 		}
 	};
 
-	TZC.version = '1.0.9';
+	TZC.version = '1.0.10';
 
 	/**
 	 * Diagnostics: type TZC.debug() in the browser console
@@ -1298,7 +1370,9 @@
 				paused: b.paused,
 				hover: b.isHover(),
 				keyboardFocus: b.keyboardFocus(),
-				collapsed: b.collapsed
+				collapsed: b.collapsed,
+				collapsedLineScrolling: b.collapsed ? b.miniCanPlay() : null,
+				collapsedLineOffset: Math.round(b.miniOffset || 0)
 			});
 		}
 		if (window.console && window.console.table) {
