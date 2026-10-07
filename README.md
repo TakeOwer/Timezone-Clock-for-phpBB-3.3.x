@@ -2,13 +2,13 @@
 
 World clock bar for phpBB 3.3.x. It shows the time of the cities you choose in a **carousel**, a continuously scrolling **ticker** or a **grid**. Time zones always stay correct thanks to automatic updates from the official **IANA** time zone database.
 
-![Version](https://img.shields.io/badge/version-1.0.9-105080)
+![Version](https://img.shields.io/badge/version-1.0.10-105080)
 ![phpBB](https://img.shields.io/badge/phpBB-3.3.x-377a33)
 ![PHP](https://img.shields.io/badge/PHP-%3E%3D7.4-377a33)
 ![License](https://img.shields.io/badge/license-GPL--2.0--only-7f7f7f)
 
 - **Package:** `salvocortesiano/timezoneclock`
-- **Version:** 1.0.9
+- **Version:** 1.0.10
 - **Author:** Salvo Cortesiano — <https://netshadows.de> — support@netshadows.de
 - **License:** [GPL-2.0](license.txt)
 - **Inspired by:** "Timezone Clock" by HiFiKabin & ctrstudio, rewritten from scratch.
